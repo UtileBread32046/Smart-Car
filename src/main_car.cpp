@@ -20,16 +20,17 @@ double distance = 0.0; // 单位:cm
 /*-----自定义函数区-----*/
 // 此处放一些不放在这里就容易出现变量丢失的函数
 // 接收回调函数, 接收数据包信息并检测接收状态
-void ondataRecv(const uint8_t *mac, const uint8_t *incoming, int len) {
-  memcpy(&receiver_data, incoming, sizeof(receiver_data)); // 将接收到的数据包拷贝到本地
-  car_status.maxSpeed = receiver_data.maxSpeed; // 将数据包中的数据提取出来
-  // Serial.printf("数据包接收成功! 速度: %d\n", car_status.maxSpeed);
-}
-
-void ondataRecv02(const uint8_t *mac, const uint8_t *incoming, int len) {
-  command = String((char*)incoming);
-  Serial.printf("%s\n", command.c_str());
-  Serial.printf("上位机数据包接收成功!\n");
+// ESP-NOW不可同时注册多个回调函数, 故使用统一的回调函数, 此处通过数据包长度进行区分
+void ondataRecv_Unified(const uint8_t *mac, const uint8_t *incoming, int len) {
+  if (len == sizeof(message)) {
+    memcpy(&receiver_data, incoming, sizeof(receiver_data)); // 将接收到的数据包拷贝到本地
+    // Serial.printf("数据包接收成功! 速度: %d\n", car_status.maxSpeed);
+  }
+  else if (len == sizeof(String)) {
+    command = String((char*)incoming);
+    Serial.printf("%s\n", command.c_str());
+    Serial.printf("上位机数据包接收成功!\n");
+  }
 }
 
 // OLED后台任务, 使屏幕刷新逻辑在另外一个核心上运行, 保证一直开启
@@ -50,8 +51,7 @@ void setup() {
   init_motor(); // 马达初始化
   init_ultrasonic(); // 超声波初始化
   init_WiFi_ESP_NOW(); // WiFi 和 ESP-NOW初始化
-  esp_now_register_recv_cb(ondataRecv); // 注册接收回调函数
-  esp_now_register_recv_cb(ondataRecv02); // 注册接收回调函数
+  esp_now_register_recv_cb(ondataRecv_Unified); // 注册统一接收回调函数
   init_OLED(); // OLED屏幕初始化
   init_MCP(); // MCP初始化
   Serial.println("小车, 启动!");
@@ -73,6 +73,8 @@ void setup() {
 void loop() {
   distance = getDistance(); // 单位:cm
   Serial.printf("距离: %fcm\n", distance);
+  // 将数据包中的数据提取出来
+  car_status.maxSpeed = receiver_data.maxSpeed;
   car_status.isRunning = receiver_data.isRunning;
   // 差速控制小车运动
   differentialSpeedControl(distance, receiver_data.throttle, receiver_data.steering);
