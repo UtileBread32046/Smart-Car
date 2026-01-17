@@ -1,6 +1,7 @@
 #include <ArduinoJson.h> // 处理JSON库
 #include <HardwareSerial.h> // 使用ESP32硬件串口
 #include "MCP.h"
+#include "main_car.h"
 
 HardwareSerial MCP_Serial(2); // 使用串口2, 通过显示指定, 和USB串口0同时工作互不干扰
 HardwareSerial BT_Serial(1); // 蓝牙串口1
@@ -44,15 +45,15 @@ void processCommand(String line) {
       int steering = params["steering"] | 0;
 
       // 差速控制
-      int leftBase = throttle + steering;
-      int rightBase = throttle - steering;
+      car_status.finalLeft = throttle + steering;
+      car_status.finalRight = throttle - steering;
 
       // 限幅
-      leftBase = constrain(leftBase, -255, 255);
-      rightBase = constrain(rightBase, -255, 255);
+      car_status.finalLeft = constrain(car_status.finalLeft, -255, 255);
+      car_status.finalRight = constrain(car_status.finalRight, -255, 255);
 
       // 驱动电机
-      move(leftBase, rightBase);
+      move(car_status.finalLeft, car_status.finalRight);
       Serial.printf("MCP指令: move (%d, %d)\n", throttle, steering);
     }
     else if (strcmp(cmd, "turn") == 0) {
@@ -60,6 +61,30 @@ void processCommand(String line) {
       Serial.printf("旋转: %f°\n", targetAngle);
       targetAngle = -targetAngle; // 以顺时针为正, 此处调和为减号
       turnToTarget(targetAngle);
+    }
+    else if (strcmp(cmd, "run") == 0) {
+      const char* direction = params["direction"] | "null"; // 方向
+      const int time = params["time"] | 10; // 时间(单位:ms)
+      int speed = params["speed"] | 50; // 速度
+      speed = constrain(speed, 50, 255); // 设置速度上下限
+      if (strcmp(direction, "forward") == 0) {
+        car_status.finalLeft = speed;
+        car_status.finalRight = speed;
+      } else if (strcmp(direction, "backward") == 0) {
+        car_status.finalLeft = -speed;
+        car_status.finalRight = -speed;
+      } else {
+        return;
+      }
+
+      // Serial.printf("接收到run指令, 移动速度: (%d, %d)\n", car_status.finalLeft, car_status.finalRight);
+      
+      int startTime = millis();
+      while (millis() - startTime < time) { // 读取当前时间作差, 判断是否到达设定时长
+        move(car_status.finalLeft, car_status.finalRight);
+        vTaskDelay(10 / portTICK_PERIOD_MS); // 使用vTaskDelay而非delay, 在FreeRTOS(Real-Time Operating System, 实时操作系统)下让出CPU, 防止一直占用核心; 同时防止看门狗WDT(Watchdog Timer)重启系统
+      }
+      move(0, 0); // 显式停止
     }
   }
 }

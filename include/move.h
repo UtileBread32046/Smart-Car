@@ -9,9 +9,8 @@ const int motorRightDir = 15;
 const int motorRightSpd = 16;
 
 
-void init_motor();
-// 小车移动函数实现
-void move(int leftSpd, int rightSpd);
+void init_motor(); // 马达初始化函数
+void move(int leftSpd, int rightSpd); // 小车移动函数实现
 void differentialSpeedControl(double distance, int throttle, int steering); // 差速控制
 
 #endif
