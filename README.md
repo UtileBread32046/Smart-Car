@@ -46,18 +46,13 @@
 ## 📡 MCP 指令集 | Command Specification
 
 小车支持通过串口、蓝牙或 MCP 协议解析标准的 JSON 数据包，实现自动化控制：
-
 ```json
-{
-  "name": "Car_01",
-  "cmd": "turn",
-  "params": {
-    "angle": 90
-  }
-}
-
+{"cmd":"move","params":{"throttle":90,"steering":20}}
 ```
 
+```json
+{"cmd":"turn","params":{"turnAngle":90}}
+```
 ---
 
 ## 📂 软件架构 | Software Architecture
