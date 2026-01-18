@@ -83,7 +83,6 @@ void loop() {
   differentialSpeedControl(distance, receiver_data.throttle, receiver_data.steering);
 
   // 接收上位机通过WiFi-NOW发来的指令
-  String command = receiver02_data.json;
   processCommand(command);
   command.clear();
 
