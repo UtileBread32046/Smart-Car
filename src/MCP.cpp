@@ -2,9 +2,9 @@
 #include <HardwareSerial.h> // 使用ESP32硬件串口
 #include "MCP.h"
 #include "main_car.h"
-
+ 
 HardwareSerial MCP_Serial(2); // 使用串口2, 通过显示指定, 和USB串口0同时工作互不干扰
-HardwareSerial BT_Serial(1); // 蓝牙串口1
+// HardwareSerial BT_Serial(1); // 蓝牙串口1
 const char* MY_NAME = "smart_car"; // 定义小车的名字字符串, 用于匹配指令
 
 // MCP初始化
@@ -13,7 +13,7 @@ void init_MCP() {
   // MCP_RX_PIN: 负责接收, 连接外部设备的发送端
   // MCP_TX_PIN: 负责发送, 连接外部设备的接收端
   MCP_Serial.begin(115200, SERIAL_8N1, MCP_RX_PIN, MCP_TX_PIN);
-  BT_Serial.begin(9600, SERIAL_8N1, -1, BT_TX_PIN);
+  // BT_Serial.begin(9600, SERIAL_8N1, -1, BT_TX_PIN);
 }
 
 // 处理Json指令

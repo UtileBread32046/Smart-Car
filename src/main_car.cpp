@@ -6,6 +6,7 @@
 #include "ultrasonic.h"
 #include "move.h"
 #include "gyroscope.h"
+// #include "optical.h"
 
 
 /*----全局变量区----*/
@@ -19,6 +20,7 @@ double distance = 0.0; // 单位:cm
 
 /*-----自定义函数区-----*/
 // 此处放一些不放在这里就容易出现变量丢失的函数
+
 // 接收回调函数, 接收数据包信息并检测接收状态
 // ESP-NOW不可同时注册多个回调函数, 故使用统一的回调函数, 此处通过数据包长度进行区分
 void ondataRecv_Unified(const uint8_t *mac, const uint8_t *incoming, int len) {
@@ -54,6 +56,7 @@ void setup() {
   esp_now_register_recv_cb(ondataRecv_Unified); // 注册统一接收回调函数
   init_OLED(); // OLED屏幕初始化
   init_MCP(); // MCP初始化
+  // init_optical(); // 光流传感器初始化
   Serial.println("小车, 启动!");
 
   // 使用双核进行多任务处理
@@ -80,9 +83,11 @@ void loop() {
   differentialSpeedControl(distance, receiver_data.throttle, receiver_data.steering);
 
   // 接收上位机通过WiFi-NOW发来的指令
-  // String command = receiver02_data.json;
+  String command = receiver02_data.json;
   processCommand(command);
   command.clear();
+
+  // processOptical();
 
   // 测试MCP
   if (MCP_Serial.available()) {
@@ -96,11 +101,11 @@ void loop() {
     processCommand(pc_line);
     delay(1000);
   }
-  // 测试蓝牙指令
-  if (BT_Serial.available()) {
-    String bt_line = BT_Serial.readStringUntil('\n');
-    processCommand(bt_line);
-    delay(1000);
-  }
+  // // 测试蓝牙指令
+  // if (BT_Serial.available()) {
+  //   String bt_line = BT_Serial.readStringUntil('\n');
+  //   processCommand(bt_line);
+  //   delay(1000);
+  // }
 }
 /*-------------------*/

@@ -5,8 +5,8 @@
 // 马达引脚
 const int motorLeftDir = 13;
 const int motorLeftSpd = 14;
-const int motorRightDir = 15;
-const int motorRightSpd = 16;
+const int motorRightDir = 26;
+const int motorRightSpd = 27;
 
 
 void init_motor(); // 马达初始化函数
