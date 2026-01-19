@@ -18,6 +18,7 @@ const int motorLeftSpd = 14;
 const int motorRightDir = 26;
 const int motorRightSpd = 27;
 
+extern unsigned long lastMotorTime; // 上次马达速度更新时间, 实现非阻塞控制
 
 void init_motor(); // 马达初始化函数
 void move(int leftSpd, int rightSpd); // 小车移动函数实现

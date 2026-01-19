@@ -10,16 +10,32 @@
 
 
 /*----全局变量区----*/
-CarStatus car_status = {0, 0, 0, true, 0, 0, 0, 0}; // 存储小车全局信息
+CarStatus car_status = {true, 0, 0, 0, 0, 0, 0, 0, 0}; // 存储小车全局信息
 extern message receiver_data;
 extern message02 receiver02_data;
 String command;
 double distance = 0.0; // 单位:cm
+static unsigned long lastStatusTime = 0; // 上次小车状态打印时间
 /*-------------------*/
 
 
 /*-----自定义函数区-----*/
 // 此处放一些不放在这里就容易出现变量丢失的函数
+
+// 小车状态打印函数
+void printCarStatue() {
+  Serial.printf("=====当前小车状态=====\n");
+  Serial.printf("运行状态: ", car_status.isRunning ? "运行中...\n" : "休眠中...\n");
+  Serial.printf("最大速度: %d\n", car_status.maxSpeed);
+  Serial.printf("左轮速度: %d\n", car_status.finalLeft);
+  Serial.printf("右轮速度: %d\n", car_status.finalRight);
+  Serial.printf("距离前方: %.2fmm\n", car_status.distance);
+  Serial.printf("X轴坐标: %.2fmm\n", car_status.posX);
+  Serial.printf("Y轴坐标: %.2fmm\n", car_status.posY);
+  Serial.printf("X轴速度: %.2fmm/s\n", car_status.speedX);
+  Serial.printf("Y轴速度: %.2fmm/s\n", car_status.speedY);
+  Serial.printf("======================\n\n");
+}
 
 // 接收回调函数, 接收数据包信息并检测接收状态
 // ESP-NOW不可同时注册多个回调函数, 故使用统一的回调函数, 此处通过数据包长度进行区分
@@ -74,8 +90,8 @@ void setup() {
 
 /*-----循环函数区-----*/
 void loop() {
-  distance = getDistance(); // 单位:cm
-  Serial.printf("距离: %fcm\n", distance);
+  getDistance(); // 单位:cm
+  // Serial.printf("距离: %fcm\n", distance);
   // 将数据包中的数据提取出来
   car_status.maxSpeed = receiver_data.maxSpeed;
   car_status.isRunning = receiver_data.isRunning;
@@ -89,6 +105,11 @@ void loop() {
   // 光流传感器进行工作
   processOptical();
 
+  // 打印小车状态
+  if (millis() - lastStatusTime > 1000) {
+    printCarStatue();
+    lastStatusTime = millis();
+  }
   // // 测试MCP
   // if (MCP_Serial.available()) {
   //   String mcp_line = MCP_Serial.readStringUntil('\n');

@@ -1,4 +1,5 @@
 #include "ultrasonic.h"
+#include "main_car.h"
 
 // 超声波初始化
 void init_ultrasonic() {
@@ -7,7 +8,7 @@ void init_ultrasonic() {
 }
 
 // 超声波测距函数
-double getDistance() {
+void getDistance() {
   digitalWrite(trig, LOW);
   delayMicroseconds(2);
   
@@ -21,5 +22,5 @@ double getDistance() {
   double distance = time/1000.0 * 340 / 2; // 距离 = 时间(μs->ms)*速度(v声 = 340m/s)->总路程/2 (单位:mm)
   distance /= 10; // 单位: mm->cm
 
-  return (distance == 0) ? 40 : distance; // 若超时, 则返回一个长距离(视为无障碍)
+  car_status.distance = (distance == 0) ? 40 : distance; // 若超时, 则返回一个长距离(视为无障碍)
 }

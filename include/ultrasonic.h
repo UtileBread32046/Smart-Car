@@ -9,6 +9,6 @@ const int echo = 18;
 // 超声波初始化
 void init_ultrasonic();
 // 超声波测距函数
-double getDistance();
+void getDistance();
 
 #endif

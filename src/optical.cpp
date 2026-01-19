@@ -18,12 +18,6 @@ static ParseState state = WAIT_HEADER; // 设置初始状态
 // 串口通讯(UART)中, 数据是以流式运输, 按字节进入内存; 1.3.1.1 光流+TOF版本协议
 static uint8_t buffer[14]; // 设置一定大小的连续内存空间, 用于存放从光流传感器中接收到的原始数据
 static uint8_t data_index = 0; // 数据计数器, 指向buffer中下一个存放数据的位置; 初始状态下为0, 表示缓冲区为空
-
-// 参数配置
-const double height = 10.0; // 底盘离地面高度(单位:mm)
-
-// 上次发送时间
-static unsigned long last_transmit = 0;
 /*------------------*/
 
 
@@ -39,7 +33,7 @@ static void calculatePV(); // 计算位置和速度函数, 进行单位换算和
 // 初始化函数
 void init_optical() {
   Optical_Serial.begin(115200, SERIAL_8N1, FLOW_RX, FLOW_TX); // 使用Optical_Serial, 传感器与ESP32进行串口通信
-  Serial.println("光流传感器正在运行中..."); // Serial为芯片与电脑端的串口
+  // Serial.println("光流传感器正在运行中..."); // Serial为芯片与电脑端的串口
 }
 // 放在loop()里的总处理函数
 void processOptical() {
@@ -47,13 +41,7 @@ void processOptical() {
   if (receiveData()) { // 当接收到完整的数据流时
     calculatePV(); // 计算
   } else {
-    Serial.println("[Error]光流传感器数据接收异常(○´･д･)ﾉ");
-  }
-  
-  // 定时打印数据
-  if (millis() - last_transmit >= 100) {
-    Serial.printf("光流传感器数据: (x,y):(%.2fmm,%.2fmm) | (vx,vy):(%.2fmm/s,%.2fmm/s)\n", car_status.posX, car_status.posY, car_status.speedX, car_status.speedY);
-    last_transmit = millis();
+    // Serial.println("[Error]光流传感器数据接收异常(○´･д･)ﾉ");
   }
 }
 
@@ -120,15 +108,15 @@ void restoreData() {
   current_flow.distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
   current_flow.valid = buffer[10];
   current_flow.confidence = buffer[11];
-  Serial.printf("光流传感器数据: flow_x:%d, flow_y:%d, intergration_time:%u, distance:%u\n", current_flow.flow_x, current_flow.flow_y, current_flow.integration_time, current_flow.distance);
+  // Serial.printf("光流传感器数据: flow_x:%d, flow_y:%d, intergration_time:%u, distance:%u\n", current_flow.flow_x, current_flow.flow_y, current_flow.integration_time, current_flow.distance);
 }
 
 // 计算实际位置和速度函数
 void calculatePV() {
   if (current_flow.valid == 0xF5) { // 当光流数据可用时(0xF5)
-    // 根据文档说明, 实际位移(mm) = 数据流数据/10000*高度(mm)
-    double flow_x_actual = current_flow.flow_x / 10000.0f * height;
-    double flow_y_actual = current_flow.flow_y / 10000.0f * height;
+    // 根据文档说明, 实际位移(mm) = 数据流数据/10000*高度(mm); 以激光测距得到的距离作为高度
+    double flow_x_actual = current_flow.flow_x / 10000.0f * current_flow.distance;
+    double flow_y_actual = current_flow.flow_y / 10000.0f * current_flow.distance;
     // 累加位置变化算出小车的实际位置
     car_status.posX += flow_x_actual;
     car_status.posY += flow_y_actual;

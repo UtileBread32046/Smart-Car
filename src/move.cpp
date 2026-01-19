@@ -1,6 +1,8 @@
 #include "move.h"
 #include "main_car.h"
 
+unsigned long lastMotorTime = 0; // 上次马达速度更新时间, 实现非阻塞控制
+
 void init_motor() {
   // 马达初始化
   pinMode(motorLeftSpd, OUTPUT);
@@ -42,19 +44,22 @@ void differentialSpeedControl(double distance, int throttle, int steering) {
   car_status.finalRight = constrain(rightBase, -car_status.maxSpeed, car_status.maxSpeed);
 
   // 运行逻辑
-  if (car_status.isRunning) {
-    if (distance < 20) { // 避障实现
-      Serial.printf("避障...\n");
-      move(car_status.maxSpeed, -car_status.maxSpeed); // 右转
-      delay(500);
+  if (millis() - lastMotorTime > 100) { // 非阻塞控制
+    if (car_status.isRunning) {
+      if (distance < 20) { // 避障实现
+        // Serial.printf("避障...\n");
+        move(car_status.maxSpeed, -car_status.maxSpeed); // 右转
+        // delay(500);
+      } else {
+        // Serial.printf("移动...\n");
+        move(car_status.finalLeft, car_status.finalRight);
+        // Serial.printf("当前速度: %d : %d\n", car_status.finalLeft, car_status.finalRight);
+        // delay(50); // 前进时加快响应速度
+      }
     } else {
-      Serial.printf("移动...\n");
-      move(car_status.finalLeft, car_status.finalRight);
-      Serial.printf("当前速度: %d : %d\n", car_status.finalLeft, car_status.finalRight);
-      delay(50); // 前进时加快响应速度
+      move(0, 0);
+      // delay(100);
     }
-  } else {
-    move(0, 0);
-    delay(100);
+    lastMotorTime = millis(); // 更新马达速度变更时间
   }
 }
