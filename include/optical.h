@@ -6,6 +6,8 @@
 // 使用UART(串口)协议, Universal Asynchronous Receiver/Transmitter: 通用异步收发器
 // 没有时钟同步信号, 通过提前约定好的波特率进行通信
 
+// Debug注意: 光流传感器必须距离地面几厘米开外, 如果紧贴地面(1cm左右)防止, 将会失效
+
 // 光流传感器数据结构体
 struct FlowData {
   int16_t flow_x;            // X像素点累计时间内累加位移 (原弧度值radians*10000)

@@ -43,11 +43,12 @@ void init_optical() {
 // 放在loop()里的总处理函数
 void processOptical() {
   // 解析传感器数据
-  if (receiveData()) { // 当接收到完整的数据流时
+  while (receiveData()) { // 当接收到完整的数据流时
     calculatePV(); // 计算
-  } else {
-    // Serial.println("[Error]光流传感器数据接收异常(○´･д･)ﾉ");
-  }
+  } 
+  // else {
+  //   // Serial.println("[Error]光流传感器数据接收异常(○´･д･)ﾉ");
+  // }
 }
 
 
@@ -107,26 +108,26 @@ bool verifyChecksum() {
 void restoreData() {
   // 根据文档说明, 前一位为数据的低字节, 后一位为高字节
   // 拼接方法: [3]位置的字节左移8位(高字节), 与[2]位置的字节进行按位或, 拼接成一个完整的16位整数
-  // current_flow.flow_x = (int16_t)((buffer[3] << 8) | buffer[2]);
-  // current_flow.flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
+  current_flow.flow_x = (int16_t)((buffer[3] << 8) | buffer[2]);
+  current_flow.flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
   current_flow.integration_time = (uint16_t)((buffer[7] << 8) | buffer[6]);
-  // current_flow.distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
+  current_flow.distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
   current_flow.valid = buffer[10];
   current_flow.confidence = buffer[11];
   // Serial.printf("光流传感器数据: flow_x:%d, flow_y:%d, intergration_time:%u, distance:%u\n", current_flow.flow_x, current_flow.flow_y, current_flow.integration_time, current_flow.distance);
 
-  int16_t raw_flow_x = (int16_t)((buffer[3] << 8) | buffer[2]);
-  int16_t raw_flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
-  uint16_t raw_distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
+  // int16_t raw_flow_x = (int16_t)((buffer[3] << 8) | buffer[2]);
+  // int16_t raw_flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
+  // uint16_t raw_distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
 
 
-  last_stable_flow_x = (3*last_stable_flow_x + raw_flow_x) >> 2;
-  last_stable_flow_y = (3*last_stable_flow_y + raw_flow_y) >> 2;
-  last_stable_distance = (3*last_stable_distance + raw_distance) >> 2;
+  // last_stable_flow_x = (3*last_stable_flow_x + raw_flow_x) >> 2;
+  // last_stable_flow_y = (3*last_stable_flow_y + raw_flow_y) >> 2;
+  // last_stable_distance = (3*last_stable_distance + raw_distance) >> 2;
 
-  current_flow.flow_x = last_stable_flow_x;
-  current_flow.flow_y = last_stable_flow_y;
-  current_flow.distance = last_stable_distance;
+  // current_flow.flow_x = last_stable_flow_x;
+  // current_flow.flow_y = last_stable_flow_y;
+  // current_flow.distance = last_stable_distance;
 }
 
 // 计算实际位置和速度函数

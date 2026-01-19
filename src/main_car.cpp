@@ -62,6 +62,14 @@ void OLEDTask(void * pvParameters) {
     vTaskDelay(100 / portTICK_PERIOD_MS); // 任务延迟, 释放CPU执行其他任务; portTICK_PERIOD_MS: 系统节拍(ms), 使当前任务进入阻塞(Blocked)状态
   }
 }
+
+// 光流传感器后台任务
+void opticalTask(void *pvParameters) {
+  while (1) {
+    processOptical();
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+  }
+}
 /*-------------------*/
 
 
@@ -87,6 +95,16 @@ void setup() {
     1,             // 5. 优先级: 数字越大优先级越高
     NULL           // 6. 任务句柄: 用于以后删除或暂停任务，不用就填 NULL
   );
+
+  xTaskCreatePinnedToCore(
+    opticalTask,
+    "optical_Task",
+    4096,
+    NULL,
+    3,
+    NULL,
+    0                // Core ID: 将任务绑定到核心Core 0
+  );
 }
 /*-------------------*/
 
@@ -105,8 +123,8 @@ void loop() {
   processCommand(command);
   command.clear();
 
-  // 光流传感器进行工作
-  processOptical();
+  // // 光流传感器进行工作
+  // processOptical();
 
   // 打印小车状态
   // printCarStatue();

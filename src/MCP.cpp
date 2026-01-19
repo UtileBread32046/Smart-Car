@@ -103,8 +103,9 @@ void processCommand(String line) {
 
       double source = car_status.posY;
       double destination = source + distance;
-      while (abs(destination - source) < 10) { // 前后误差各为10mm
+      while (abs(destination - car_status.posY) > 10) { // 前后误差各为10mm
         move(car_status.finalLeft, car_status.finalRight);
+        Serial.printf("当前误差: %.02fmm\n", destination - car_status.posY);
         vTaskDelay(10 / portTICK_PERIOD_MS);
       }
       move(0, 0);
