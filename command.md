@@ -4,7 +4,7 @@
   a. 指令名称: turn
   b. 可调参数: 转向角度
 ````json
-{"cmd":"turn","params":{"targetAngle":90}}
+{"cmd":"turn","params":{"turnAngle":90}}
 ````
 
 2. 定时移动指令

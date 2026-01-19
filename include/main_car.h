@@ -3,6 +3,8 @@
 
 struct CarStatus {
   bool isRunning; // 记录小车运行状态
+  bool angleLock; // 记录小车是否处于闭环控制
+  double lockAngle; // 记录小车闭环控制时的角度
   int maxSpeed; // 记录小车最大速度
   int finalLeft; // 小车最终左轮速度
   int finalRight; // 小车最终右轮速度

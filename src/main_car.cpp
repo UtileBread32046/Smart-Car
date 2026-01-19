@@ -10,12 +10,13 @@
 
 
 /*----全局变量区----*/
-CarStatus car_status = {true, 0, 0, 0, 0, 0, 0, 0, 0}; // 存储小车全局信息
+CarStatus car_status = {true, false, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 存储小车全局信息
 extern message receiver_data;
 extern message02 receiver02_data;
 String command;
 static unsigned long lastStatusTime = 0; // 上次小车状态打印时间
 static unsigned long lastPCCommand = 0; // 上一次读取电脑终端指令时间
+static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
 /*-------------------*/
 
 
@@ -118,6 +119,19 @@ void loop() {
   car_status.isRunning = receiver_data.isRunning;
   // 差速控制小车运动
   differentialSpeedControl(car_status.distance, receiver_data.throttle, receiver_data.steering);
+
+  // 闭环控制小车, 保持走直线
+  if (car_status.angleLock) {
+    if (millis() - lastLockTime > 10) {
+      mpu6050.update();
+      double currentAngle = mpu6050.getAngleZ();
+      double error = car_status.lockAngle - currentAngle;
+      if (abs(error) > 2) {
+        turnToTarget(error);
+      }
+      lastLockTime = millis();
+    }
+  }
 
   // 接收上位机通过WiFi-NOW发来的指令
   processCommand(command);

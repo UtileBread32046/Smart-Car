@@ -6,6 +6,7 @@
 // HardwareSerial MCP_Serial(1); // (为避免冲突, 临时将串口2改成串口1)使用串口2, 通过显示指定, 和USB串口0同时工作互不干扰
 // HardwareSerial BT_Serial(1); // 蓝牙串口1
 const char* MY_NAME = "smart_car"; // 定义小车的名字字符串, 用于匹配指令
+extern double getCurrentAngle();
 
 // MCP初始化
 void init_MCP() {
@@ -62,6 +63,15 @@ void processCommand(String line) {
       Serial.printf("旋转: %f°\n", targetAngle);
       targetAngle = -targetAngle; // 以顺时针为正, 此处调和为减号
       turnToTarget(targetAngle);
+    }
+    else if (strcmp(cmd, "lock") == 0) {
+      car_status.angleLock = true;
+      car_status.lockAngle = getCurrentAngle();
+      Serial.printf("小车进入闭环控制模式!\n");
+    }
+    else if (strcmp(cmd, "unlock") == 0) {
+      car_status.angleLock = false;
+      Serial.printf("已取消闭环控制模式~\n");
     }
     else if (strcmp(cmd, "run_time") == 0) {
       const char* direction = params["direction"] | "null"; // 方向
