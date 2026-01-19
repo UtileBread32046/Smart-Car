@@ -1,8 +1,8 @@
 #ifndef OPTICAL_H
 #define OPTICAL_H
 #include <Arduino.h>
-#define FLOW_RX 16 // 光流传感器接收接口, 接ESP32的发送端
-#define FLOW_TX 17 // 输出接口, 接ESP32的接收端
+#define FLOW_RX 16 // ESP32的接收端, 接光流传感器的输出接口TX
+#define FLOW_TX 17 // ESP32的发送端, 接光流传感器的接收接口RX
 // 使用UART(串口)协议, Universal Asynchronous Receiver/Transmitter: 通用异步收发器
 // 没有时钟同步信号, 通过提前约定好的波特率进行通信
 
@@ -19,6 +19,7 @@ struct FlowData {
 // 导入外部变量, 供其他文件调用和修改
 extern FlowData current_flow;
 // extern PositionVelocity pv_data;
+extern HardwareSerial Optical_Serial; // 光流传感器所占用的串口
 
 // 初始化函数
 void init_optical();

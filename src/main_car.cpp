@@ -6,11 +6,11 @@
 #include "ultrasonic.h"
 #include "move.h"
 #include "gyroscope.h"
-// #include "optical.h"
+#include "optical.h"
 
 
 /*----全局变量区----*/
-CarStatus car_status = {0, 0, 0, true}; // 存储小车全局信息
+CarStatus car_status = {0, 0, 0, true, 0, 0, 0, 0}; // 存储小车全局信息
 extern message receiver_data;
 extern message02 receiver02_data;
 String command;
@@ -56,7 +56,7 @@ void setup() {
   esp_now_register_recv_cb(ondataRecv_Unified); // 注册统一接收回调函数
   init_OLED(); // OLED屏幕初始化
   init_MCP(); // MCP初始化
-  // init_optical(); // 光流传感器初始化
+  init_optical(); // 光流传感器初始化
   Serial.println("小车, 启动!");
 
   // 使用双核进行多任务处理
@@ -86,20 +86,21 @@ void loop() {
   processCommand(command);
   command.clear();
 
-  // processOptical();
+  // 光流传感器进行工作
+  processOptical();
 
-  // 测试MCP
-  if (MCP_Serial.available()) {
-    String mcp_line = MCP_Serial.readStringUntil('\n');
-    processCommand(mcp_line);
-    delay(1000);
-  }
-  // 测试电脑指令
-  if (Serial.available()) {
-    String pc_line = Serial.readStringUntil('\n');
-    processCommand(pc_line);
-    delay(1000);
-  }
+  // // 测试MCP
+  // if (MCP_Serial.available()) {
+  //   String mcp_line = MCP_Serial.readStringUntil('\n');
+  //   processCommand(mcp_line);
+  //   delay(1000);
+  // }
+  // // 测试电脑指令
+  // if (Serial.available()) {
+  //   String pc_line = Serial.readStringUntil('\n');
+  //   processCommand(pc_line);
+  //   delay(1000);
+  // }
   // // 测试蓝牙指令
   // if (BT_Serial.available()) {
   //   String bt_line = BT_Serial.readStringUntil('\n');

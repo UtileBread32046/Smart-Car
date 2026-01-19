@@ -2,8 +2,8 @@
 #include <HardwareSerial.h> // 使用ESP32硬件串口
 #include "MCP.h"
 #include "main_car.h"
- 
-HardwareSerial MCP_Serial(2); // 使用串口2, 通过显示指定, 和USB串口0同时工作互不干扰
+
+// HardwareSerial MCP_Serial(1); // (为避免冲突, 临时将串口2改成串口1)使用串口2, 通过显示指定, 和USB串口0同时工作互不干扰
 // HardwareSerial BT_Serial(1); // 蓝牙串口1
 const char* MY_NAME = "smart_car"; // 定义小车的名字字符串, 用于匹配指令
 
@@ -12,17 +12,18 @@ void init_MCP() {
   // SERIAL_8N1: 帧格式配置(数据位为8位, 无奇偶校验No parity, 1为停止位)
   // MCP_RX_PIN: 负责接收, 连接外部设备的发送端
   // MCP_TX_PIN: 负责发送, 连接外部设备的接收端
-  MCP_Serial.begin(115200, SERIAL_8N1, MCP_RX_PIN, MCP_TX_PIN);
+  // MCP_Serial.begin(115200, SERIAL_8N1, MCP_RX_PIN, MCP_TX_PIN); // 当前似乎不需要额外占用一个串口了
   // BT_Serial.begin(9600, SERIAL_8N1, -1, BT_TX_PIN);
 }
 
-// 处理Json指令
-String handleMCP() {
-  if (MCP_Serial.available()) { // 当MCP串口可用时
-    String line = MCP_Serial.readStringUntil('\n'); // 捕获: 以换行符\n作为末尾字符, 读取json信息; 在嵌入式开发串口通信中, 有"单行约定(Single-line Convention)", 即将整条指令在同一行发出, 末尾加上\n; 若发送停止, 会在超时timeout后将已接收的部分返回
-    return line;
-  }
-}
+// 暂时不需要MCP串口
+// // 处理Json指令
+// String handleMCP() {
+//   if (MCP_Serial.available()) { // 当MCP串口可用时
+//     String line = MCP_Serial.readStringUntil('\n'); // 捕获: 以换行符\n作为末尾字符, 读取json信息; 在嵌入式开发串口通信中, 有"单行约定(Single-line Convention)", 即将整条指令在同一行发出, 末尾加上\n; 若发送停止, 会在超时timeout后将已接收的部分返回
+//     return line;
+//   }
+// }
 
 // 运行读取到的json指令
 void processCommand(String line) {
