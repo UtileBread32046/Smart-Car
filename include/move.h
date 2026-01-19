@@ -3,10 +3,10 @@
 #include <Arduino.h>
 
 // 马达引脚
-const int motorLeftDir = 26;
-const int motorLeftSpd = 27;
-const int motorRightDir = 13;
-const int motorRightSpd = 14;
+const int motorLeftDir = 13;
+const int motorLeftSpd = 14;
+const int motorRightDir = 26;
+const int motorRightSpd = 27;
 
 
 void init_motor(); // 马达初始化函数
