@@ -18,6 +18,11 @@ static ParseState state = WAIT_HEADER; // 设置初始状态
 // 串口通讯(UART)中, 数据是以流式运输, 按字节进入内存; 1.3.1.1 光流+TOF版本协议
 static uint8_t buffer[14]; // 设置一定大小的连续内存空间, 用于存放从光流传感器中接收到的原始数据
 static uint8_t data_index = 0; // 数据计数器, 指向buffer中下一个存放数据的位置; 初始状态下为0, 表示缓冲区为空
+
+// 用于稳定数据的变量
+int16_t last_stable_flow_x = 0;
+int16_t last_stable_flow_y = 0;
+uint16_t last_stable_distance = 0;
 /*------------------*/
 
 
@@ -102,13 +107,26 @@ bool verifyChecksum() {
 void restoreData() {
   // 根据文档说明, 前一位为数据的低字节, 后一位为高字节
   // 拼接方法: [3]位置的字节左移8位(高字节), 与[2]位置的字节进行按位或, 拼接成一个完整的16位整数
-  current_flow.flow_x = (int16_t)((buffer[3] << 8) | buffer[2]);
-  current_flow.flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
+  // current_flow.flow_x = (int16_t)((buffer[3] << 8) | buffer[2]);
+  // current_flow.flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
   current_flow.integration_time = (uint16_t)((buffer[7] << 8) | buffer[6]);
-  current_flow.distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
+  // current_flow.distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
   current_flow.valid = buffer[10];
   current_flow.confidence = buffer[11];
   // Serial.printf("光流传感器数据: flow_x:%d, flow_y:%d, intergration_time:%u, distance:%u\n", current_flow.flow_x, current_flow.flow_y, current_flow.integration_time, current_flow.distance);
+
+  int16_t raw_flow_x = (int16_t)((buffer[3] << 8) | buffer[2]);
+  int16_t raw_flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
+  uint16_t raw_distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
+
+
+  last_stable_flow_x = (3*last_stable_flow_x + raw_flow_x) >> 2;
+  last_stable_flow_y = (3*last_stable_flow_y + raw_flow_y) >> 2;
+  last_stable_distance = (3*last_stable_distance + raw_distance) >> 2;
+
+  current_flow.flow_x = last_stable_flow_x;
+  current_flow.flow_y = last_stable_flow_y;
+  current_flow.distance = last_stable_distance;
 }
 
 // 计算实际位置和速度函数

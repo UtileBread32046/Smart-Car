@@ -63,7 +63,7 @@ void processCommand(String line) {
       targetAngle = -targetAngle; // 以顺时针为正, 此处调和为减号
       turnToTarget(targetAngle);
     }
-    else if (strcmp(cmd, "run") == 0) {
+    else if (strcmp(cmd, "run_time") == 0) {
       const char* direction = params["direction"] | "null"; // 方向
       const int time = params["time"] | 10; // 时间(单位:ms)
       int speed = params["speed"] | 50; // 速度
@@ -77,7 +77,6 @@ void processCommand(String line) {
       } else {
         return;
       }
-
       // Serial.printf("接收到run指令, 移动速度: (%d, %d)\n", car_status.finalLeft, car_status.finalRight);
       
       int startTime = millis();
@@ -86,6 +85,29 @@ void processCommand(String line) {
         vTaskDelay(10 / portTICK_PERIOD_MS); // 使用vTaskDelay而非delay, 在FreeRTOS(Real-Time Operating System, 实时操作系统)下让出CPU, 防止一直占用核心; 同时防止看门狗WDT(Watchdog Timer)重启系统
       }
       move(0, 0); // 显式停止
+    }
+    else if (strcmp(cmd, "run_distance") == 0) {
+      const double distance = params["distance"] | 0;
+      int speed = params["speed"] | 40;
+      speed = constrain(speed, 40, 200);
+
+      if (distance > 0) {
+        car_status.finalLeft = speed;
+        car_status.finalRight = speed;
+      } else {
+        car_status.finalLeft = -speed;
+        car_status.finalRight = -speed;
+      }
+
+      Serial.printf("接收到指令: run_distance, 移动距离: %.2fmm, 速度: %d\n", distance, speed);
+
+      double source = car_status.posY;
+      double destination = source + distance;
+      while (abs(destination - source) < 10) { // 前后误差各为10mm
+        move(car_status.finalLeft, car_status.finalRight);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+      }
+      move(0, 0);
     }
   }
 }

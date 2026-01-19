@@ -14,8 +14,8 @@ CarStatus car_status = {true, 0, 0, 0, 0, 0, 0, 0, 0}; // 存储小车全局信�
 extern message receiver_data;
 extern message02 receiver02_data;
 String command;
-double distance = 0.0; // 单位:cm
 static unsigned long lastStatusTime = 0; // 上次小车状态打印时间
+static unsigned long lastPCCommand = 0; // 上一次读取电脑终端指令时间
 /*-------------------*/
 
 
@@ -24,17 +24,20 @@ static unsigned long lastStatusTime = 0; // 上次小车状态打印时间
 
 // 小车状态打印函数
 void printCarStatue() {
-  Serial.printf("=====当前小车状态=====\n");
-  Serial.printf("运行状态: ", car_status.isRunning ? "运行中...\n" : "休眠中...\n");
-  Serial.printf("最大速度: %d\n", car_status.maxSpeed);
-  Serial.printf("左轮速度: %d\n", car_status.finalLeft);
-  Serial.printf("右轮速度: %d\n", car_status.finalRight);
-  Serial.printf("距离前方: %.2fmm\n", car_status.distance);
-  Serial.printf("X轴坐标: %.2fmm\n", car_status.posX);
-  Serial.printf("Y轴坐标: %.2fmm\n", car_status.posY);
-  Serial.printf("X轴速度: %.2fmm/s\n", car_status.speedX);
-  Serial.printf("Y轴速度: %.2fmm/s\n", car_status.speedY);
-  Serial.printf("======================\n\n");
+  if (millis() - lastStatusTime > 1000) {
+    Serial.printf("=====当前小车状态=====\n");
+    Serial.printf("运行状态: ", car_status.isRunning ? "运行中...\n" : "休眠中...\n");
+    Serial.printf("最大速度: %d\n", car_status.maxSpeed);
+    Serial.printf("左轮速度: %d\n", car_status.finalLeft);
+    Serial.printf("右轮速度: %d\n", car_status.finalRight);
+    Serial.printf("距离前方: %.2fmm\n", car_status.distance);
+    Serial.printf("X轴坐标: %.2fmm\n", car_status.posX);
+    Serial.printf("Y轴坐标: %.2fmm\n", car_status.posY);
+    Serial.printf("X轴速度: %.2fmm/s\n", car_status.speedX);
+    Serial.printf("Y轴速度: %.2fmm/s\n", car_status.speedY);
+    Serial.printf("======================\n\n");
+    lastStatusTime = millis();
+  }
 }
 
 // 接收回调函数, 接收数据包信息并检测接收状态
@@ -55,7 +58,7 @@ void ondataRecv_Unified(const uint8_t *mac, const uint8_t *incoming, int len) {
 void OLEDTask(void * pvParameters) {
   while (1) { // 任务函数需要一个永不退出的死循环, 否则会因为找不到出口而崩溃(或需要手动调用vTaskDelete)
     // Serial.printf(car_status.isRunning ? "OLED显示运行中...\n" : "OLED显示休眠中...\n");
-    screenDisplay(car_status.isRunning, distance, car_status.finalLeft, car_status.finalRight);
+    screenDisplay(car_status.isRunning, car_status.distance, car_status.finalLeft, car_status.finalRight);
     vTaskDelay(100 / portTICK_PERIOD_MS); // 任务延迟, 释放CPU执行其他任务; portTICK_PERIOD_MS: 系统节拍(ms), 使当前任务进入阻塞(Blocked)状态
   }
 }
@@ -90,13 +93,13 @@ void setup() {
 
 /*-----循环函数区-----*/
 void loop() {
-  getDistance(); // 单位:cm
+  getDistance(); // 超声波传感器测距(单位:cm)
   // Serial.printf("距离: %fcm\n", distance);
   // 将数据包中的数据提取出来
   car_status.maxSpeed = receiver_data.maxSpeed;
   car_status.isRunning = receiver_data.isRunning;
   // 差速控制小车运动
-  differentialSpeedControl(distance, receiver_data.throttle, receiver_data.steering);
+  differentialSpeedControl(car_status.distance, receiver_data.throttle, receiver_data.steering);
 
   // 接收上位机通过WiFi-NOW发来的指令
   processCommand(command);
@@ -106,22 +109,22 @@ void loop() {
   processOptical();
 
   // 打印小车状态
-  if (millis() - lastStatusTime > 1000) {
-    printCarStatue();
-    lastStatusTime = millis();
-  }
+  // printCarStatue();
+
   // // 测试MCP
   // if (MCP_Serial.available()) {
   //   String mcp_line = MCP_Serial.readStringUntil('\n');
   //   processCommand(mcp_line);
   //   delay(1000);
   // }
-  // // 测试电脑指令
-  // if (Serial.available()) {
-  //   String pc_line = Serial.readStringUntil('\n');
-  //   processCommand(pc_line);
-  //   delay(1000);
-  // }
+  // 测试电脑指令
+  if (Serial.available()) {
+    if (millis() - lastPCCommand > 1000) {
+      String pc_line = Serial.readStringUntil('\n');
+      processCommand(pc_line);
+      lastPCCommand = millis();
+    }
+  }
   // // 测试蓝牙指令
   // if (BT_Serial.available()) {
   //   String bt_line = BT_Serial.readStringUntil('\n');
