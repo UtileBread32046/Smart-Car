@@ -14,5 +14,7 @@ extern int turnSpeed; // 设置旋转速度
 void init_gyroscope();
 // 移动指定旋转角度函数
 void turnToTarget();
+// 闭环控制函数, 锁定航向, 使小车始终保持走直线
+void angleLocking();
 
 #endif

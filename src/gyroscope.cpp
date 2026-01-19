@@ -7,6 +7,7 @@ MPU6050 mpu6050(Wire); // 创建传感器实例
 // int turnSpeed = 80; // 设置旋转速度
 // 引入外部变量, 记录当前左右轮速度
 
+static unsigned long lastAngleTime = 0; // 记录上次获取角度的时间
 
 // 初始化函数
 void init_gyroscope() {
@@ -16,6 +17,12 @@ void init_gyroscope() {
   mpu6050.calcGyroOffsets(true); // calculate gyroscope offsets: 计算陀螺仪偏移量; 启用自动校准(校准过程应保证小车静止)
   Serial.println("\n校准完成!");
 }
+
+// 封装独立的旋转函数, 从而实现非阻塞控制
+static void turning() {
+  
+}
+
 // 移动指定旋转角度函数
 void turnToTarget(double turnAngle) {
   // 首先要获取旋转以前的角度参数, 并计算出绝对目标角度
@@ -46,5 +53,12 @@ void turnToTarget(double turnAngle) {
     }
     move(car_status.finalLeft, car_status.finalRight);
     delay(10); // 为处理器处理和电机旋转预留时间
+  }
+}
+
+// 闭环控制函数, 锁定航向, 使小车始终保持走直线
+void angleLocking() {
+  if (millis() - lastAngleTime > 100) {
+    lastAngleTime = millis();
   }
 }
