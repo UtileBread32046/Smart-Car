@@ -7,6 +7,7 @@
 #include "move.h"
 #include "gyroscope.h"
 #include "optical.h"
+#include "photoelectric.h"
 
 
 /*----全局变量区----*/
@@ -51,7 +52,8 @@ void ondataRecv_Unified(const uint8_t *mac, const uint8_t *incoming, int len) {
     // Serial.printf("数据包接收成功! 速度: %d\n", car_status.maxSpeed);
     lastRemoteTime = millis(); // 更新收到数据包的时间
   }
-  else if (len == sizeof(String)) {
+  // else if (len == sizeof(String)) {
+  else {
     command = String((char*)incoming);
     Serial.printf("%s\n", command.c_str());
     Serial.printf("上位机数据包接收成功!\n");
@@ -123,7 +125,9 @@ void loop() {
 
   if (millis() - lastRemoteTime < 500) { // 当且仅当遥控器在线, 很快接收到数据包时, 才提取数据包中的状态
     updateCarStatusFromRemote(); // 更新小车状态
-  } else if (millis() - lastRemote02Time < 500) { // 当上位机在线时
+    // 差速控制小车运动
+    differentialSpeedControl();
+  } else if (millis() - lastRemote02Time < 5000) { // 当上位机在线时
     // 接收上位机通过WiFi-NOW发来的指令
     processCommand(command);
     command.clear();
@@ -137,8 +141,7 @@ void loop() {
       }
     }
   }
-  // 差速控制小车运动
-  differentialSpeedControl();
+
   // 闭环控制小车, 保持走直线
   if (car_status.angleLock) {
     if (millis() - lastLockTime > 10) {
@@ -153,7 +156,7 @@ void loop() {
   }
 
   // 打印小车状态
-  printCarStatue();
+  // printCarStatue();
 
   // // 测试MCP
   // if (MCP_Serial.available()) {
