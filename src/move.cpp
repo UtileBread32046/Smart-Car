@@ -35,18 +35,11 @@ void move(int leftSpd, int rightSpd) {
   }
 }
 
-void differentialSpeedControl(double distance, int throttle, int steering) {
-  // 差速控制: 左轮 = 油门+转向 / 右轮 = 油门-转向
-  int leftBase = throttle + steering;
-  int rightBase = throttle - steering;
-  // 限幅, 防止计算结果超过设定的最大速度
-  car_status.finalLeft = constrain(leftBase, -car_status.maxSpeed, car_status.maxSpeed);
-  car_status.finalRight = constrain(rightBase, -car_status.maxSpeed, car_status.maxSpeed);
-
+void differentialSpeedControl() {
   // 运行逻辑
   if (millis() - lastMotorTime > 100) { // 非阻塞控制
     if (car_status.isRunning) {
-      if (distance < 20) { // 避障实现
+      if (car_status.distance < 20) { // 避障实现
         // Serial.printf("避障...\n");
         move(car_status.maxSpeed, -car_status.maxSpeed); // 右转
         // delay(500);

@@ -60,3 +60,16 @@ void messageSend(message& sender_data, int currentSpeed, int currentX, int curre
     Serial.println("发送失败qwq");
   }
 }
+
+// 小车状态更新函数
+void updateCarStatusFromRemote() {
+  // 将数据包中的数据提取出来
+  car_status.maxSpeed = receiver_data.maxSpeed;
+  car_status.isRunning = receiver_data.isRunning;
+  // 差速控制: 左轮 = 油门+转向 / 右轮 = 油门-转向
+  int leftBase = receiver_data.throttle + receiver_data.steering;
+  int rightBase = receiver_data.throttle - receiver_data.steering;
+  // 限幅, 防止计算结果超过设定的最大速度
+  car_status.finalLeft = constrain(leftBase, -car_status.maxSpeed, car_status.maxSpeed);
+  car_status.finalRight = constrain(rightBase, -car_status.maxSpeed, car_status.maxSpeed);
+}

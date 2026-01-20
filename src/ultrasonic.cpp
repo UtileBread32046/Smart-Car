@@ -1,6 +1,8 @@
 #include "ultrasonic.h"
 #include "main_car.h"
 
+static unsigned long lastUltraSonicTime = 0;
+
 // 超声波初始化
 void init_ultrasonic() {
   pinMode(trig, OUTPUT);
@@ -9,6 +11,11 @@ void init_ultrasonic() {
 
 // 超声波测距函数
 void getDistance() {
+  if (millis() - lastUltraSonicTime < 50) { // 每50ms采样一次, 其余时间直接跳过, 实现分时调度, 防止卡顿
+    return;
+  }
+  lastUltraSonicTime = millis(); // 更新采样时间
+
   digitalWrite(trig, LOW);
   delayMicroseconds(2);
   
@@ -17,7 +24,7 @@ void getDistance() {
 
   digitalWrite(trig, LOW);
 
-  long time = pulseIn(echo, HIGH, 30000); // 30ms超时限制 (单位:微秒μs), 若超过最大时长, 则返回值为0
+  long time = pulseIn(echo, HIGH, 30000); // 30ms超时限制 (单位:微秒μs), 若超过最大时长, 则返回值为0; 该函数为硬件监听函数, 会强制让Core1停下来运行, 造成卡顿
   // 注意下方.0应当放在1000后, 否则time和1000做整数除法, 会直接省去小数精度
   double distance = time/1000.0 * 340 / 2; // 距离 = 时间(μs->ms)*速度(v声 = 340m/s)->总路程/2 (单位:mm)
   distance /= 10; // 单位: mm->cm

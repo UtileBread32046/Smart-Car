@@ -20,3 +20,25 @@
 ````json
 {"cmd":"run_distance","params":{"distance":-50,"speed":60}}
 ````
+
+4. 闭环控制指令
+  a. 指令名称: lock / unlock
+````json
+{"cmd":"lock"}
+{"cmd":"unlock"}
+````
+
+5. 设置最大速度指令
+  a. 指令名称: setMaxSpeed
+  b. 可调参数: 最大速度
+````json
+{"cmd":"setMaxSpeed", "params":{"speed":50}}
+````
+
+6. 设置运行状态指令
+  a. 指令名称: setRunning
+  b. 可调参数: 运行状态
+````json
+{"cmd":"setRunning", "params":{"isRunning":true}}
+{"cmd":"setRunning", "params":{"isRunning":false}}
+````

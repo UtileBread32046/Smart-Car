@@ -120,5 +120,14 @@ void processCommand(String line) {
       }
       move(0, 0);
     }
+    else if (strcmp(cmd, "setMaxSpeed") == 0) {
+      int speed = params["speed"] | 0;
+      speed = constrain(speed, 40, 255);
+      car_status.maxSpeed = speed;
+    }
+    else if (strcmp(cmd, "setRunning") == 0) {
+      const bool isRunning = params["isRunning"] | true;
+      car_status.isRunning = isRunning;
+    }
   }
 }

@@ -17,6 +17,8 @@ String command;
 static unsigned long lastStatusTime = 0; // 上次小车状态打印时间
 static unsigned long lastPCCommand = 0; // 上一次读取电脑终端指令时间
 static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
+static unsigned long lastRemoteTime = 0; // 上一次收到遥控器数据包的时间
+static unsigned long lastRemote02Time = 0; // 上一次收到上位机数据包的时间
 /*-------------------*/
 
 
@@ -27,7 +29,7 @@ static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
 void printCarStatue() {
   if (millis() - lastStatusTime > 1000) {
     Serial.printf("=====当前小车状态=====\n");
-    Serial.printf("运行状态: ", car_status.isRunning ? "运行中...\n" : "休眠中...\n");
+    Serial.printf("运行状态: %s", car_status.isRunning ? "运行中...\n" : "休眠中...\n");
     Serial.printf("最大速度: %d\n", car_status.maxSpeed);
     Serial.printf("左轮速度: %d\n", car_status.finalLeft);
     Serial.printf("右轮速度: %d\n", car_status.finalRight);
@@ -47,11 +49,13 @@ void ondataRecv_Unified(const uint8_t *mac, const uint8_t *incoming, int len) {
   if (len == sizeof(message)) {
     memcpy(&receiver_data, incoming, sizeof(receiver_data)); // 将接收到的数据包拷贝到本地
     // Serial.printf("数据包接收成功! 速度: %d\n", car_status.maxSpeed);
+    lastRemoteTime = millis(); // 更新收到数据包的时间
   }
   else if (len == sizeof(String)) {
     command = String((char*)incoming);
     Serial.printf("%s\n", command.c_str());
     Serial.printf("上位机数据包接收成功!\n");
+    lastRemote02Time = millis(); // 更新收到数据包的时间
   }
 }
 
@@ -112,14 +116,29 @@ void setup() {
 
 /*-----循环函数区-----*/
 void loop() {
-  getDistance(); // 超声波传感器测距(单位:cm)
-  // Serial.printf("距离: %fcm\n", distance);
-  // 将数据包中的数据提取出来
-  car_status.maxSpeed = receiver_data.maxSpeed;
-  car_status.isRunning = receiver_data.isRunning;
-  // 差速控制小车运动
-  differentialSpeedControl(car_status.distance, receiver_data.throttle, receiver_data.steering);
+  // 超声波传感器测距(单位:cm)
+  getDistance();
+  // 光流传感器进行工作
+  processOptical();
 
+  if (millis() - lastRemoteTime < 500) { // 当且仅当遥控器在线, 很快接收到数据包时, 才提取数据包中的状态
+    updateCarStatusFromRemote(); // 更新小车状态
+  } else if (millis() - lastRemote02Time < 500) { // 当上位机在线时
+    // 接收上位机通过WiFi-NOW发来的指令
+    processCommand(command);
+    command.clear();
+  } else { // 当遥控器和上位机均离线时, 接收来自电脑端的指令
+    // 测试电脑指令
+    if (Serial.available()) {
+      if (millis() - lastPCCommand > 1000) {
+        String pc_line = Serial.readStringUntil('\n');
+        processCommand(pc_line);
+        lastPCCommand = millis();
+      }
+    }
+  }
+  // 差速控制小车运动
+  differentialSpeedControl();
   // 闭环控制小车, 保持走直线
   if (car_status.angleLock) {
     if (millis() - lastLockTime > 10) {
@@ -133,15 +152,8 @@ void loop() {
     }
   }
 
-  // 接收上位机通过WiFi-NOW发来的指令
-  processCommand(command);
-  command.clear();
-
-  // // 光流传感器进行工作
-  // processOptical();
-
   // 打印小车状态
-  // printCarStatue();
+  printCarStatue();
 
   // // 测试MCP
   // if (MCP_Serial.available()) {
@@ -149,14 +161,7 @@ void loop() {
   //   processCommand(mcp_line);
   //   delay(1000);
   // }
-  // 测试电脑指令
-  if (Serial.available()) {
-    if (millis() - lastPCCommand > 1000) {
-      String pc_line = Serial.readStringUntil('\n');
-      processCommand(pc_line);
-      lastPCCommand = millis();
-    }
-  }
+
   // // 测试蓝牙指令
   // if (BT_Serial.available()) {
   //   String bt_line = BT_Serial.readStringUntil('\n');

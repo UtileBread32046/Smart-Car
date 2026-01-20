@@ -3,6 +3,7 @@
 #include <esp_now.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
+#include "main_car.h"
 
 /*-----传输数据包区-----*/
 // 数据包结构体(需要和发送端一致)
@@ -34,6 +35,7 @@ void registerRemote(); // 遥控器端注册函数
 void ondataSent(const uint8_t *address, esp_now_send_status_t status); // 发送回调函数, 检测发送状态
 void ondataRecv(const uint8_t *mac, const uint8_t *incoming, int len); // 接收回调函数, 接收数据包信息并检测接收状态
 void messageSend(message& sender_data, int currentSpeed, int currentX, int currentY, bool isRunning); // 遥控器发送数据包函数
+void updateCarStatusFromRemote(); // 小车状态更新函数
 /*-------------------*/
 
 #endif
