@@ -16,6 +16,7 @@ void printCarStatue() {
     Serial.printf("Y轴坐标: %.2fmm\n", receiver_test.car_status.posY);
     Serial.printf("X轴速度: %.2fmm/s\n", receiver_test.car_status.speedX);
     Serial.printf("Y轴速度: %.2fmm/s\n", receiver_test.car_status.speedY);
+    Serial.printf("最终测速: %.2fmm/s\n", receiver_test.car_status.finalSpeed);
     Serial.printf("======================\n\n");
     lastPrintTime = millis();
   }
@@ -36,6 +37,7 @@ void init_esp_now() { // 初始化函数
 }
 
 void setup() {
+  Serial.begin(115200); // 串口和PC端进行通信
   init_esp_now(); // 进行初始化
 }
 

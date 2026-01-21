@@ -2,6 +2,8 @@
 #include "photoelectric.h"
 #include "main_car.h"
 
+extern double refreshTime; // 从外部引入光流传感器的刷新间隔, 与其保持同步
+
 // 设置转换系数: 轮径67mm, 一周120脉冲 => (67 * 3.14159) / 120 = 1.754056
 const double conversion = 1.754056;
 bool phelecValid = false;
@@ -9,7 +11,6 @@ double dx_phelec = 0; // 平均位移
 
 // 静态变量, 用于记录状态和时间
 static unsigned long lastCalcTime = 0;
-static unsigned long intervalTime = 100; // (ms)
 static bool lastA = true;
 static bool lastB = true;
 
@@ -51,7 +52,7 @@ void processPhotoelectric() {
   }
 
   // 每100ms计算一次间隔时间速度
-  if (millis() - lastCalcTime >= 100) {
+  if (millis() - lastCalcTime >= refreshTime) {
     // 左右轮误差保持在一个范围内, 保证是直线行驶时才进行计算
     if (abs(pulseSumA-pulseSumB) < 20) {
       // 计算此时刻内的轮子真实位移

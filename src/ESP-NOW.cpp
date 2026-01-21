@@ -3,9 +3,10 @@
 /*-----全局变量-----*/
 // 小车 MAC 地址: 48:E7:29:15:84:68
 // 上位机 MAC 地址: EC:64:C9:92:36:2C
+// 测试机 MAC 地址: EC:64:C9:92:3A:90
 // uint8_t: 无符号的8位整数类型 -> 可移植性：确保代码在不同平台(单片机)上行为一致
 uint8_t SmartCarAddress[] = {0x48, 0xE7, 0x29, 0x15, 0x84, 0x68}; // 广播目的地址(小车的MAC地址)
-uint8_t testReceiverAddress[] = {}; // 测试接收板的MAC地址
+uint8_t testReceiverAddress[] = {0xEC, 0x64, 0xC9, 0x92, 0x3A, 0x90}; // 测试接收板的MAC地址
 unsigned long lastSendTime = 0; // 记录上次发送数据包时间戳, 实现非阻塞控制
 unsigned long lastSendTestTime = 0;
 message sender_data;
@@ -60,8 +61,9 @@ void registerSmartCar() {
 
 // 发送回调函数, 检测发送状态
 void ondataSent(const uint8_t *address, esp_now_send_status_t status) {
-  Serial.print("检测发送状态: ");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "成功awa" : "失败qwq"); 
+  // 测试完成, 暂时注释掉
+  // Serial.print("检测发送状态: ");
+  // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "成功awa" : "失败qwq"); 
 }
 
 

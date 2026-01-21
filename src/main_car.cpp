@@ -8,6 +8,7 @@
 #include "gyroscope.h"
 #include "optical.h"
 #include "photoelectric.h"
+#include "Kalman.h"
 
 
 /*----全局变量区----*/
@@ -74,7 +75,7 @@ void OLEDTask(void * pvParameters) {
 // 光流传感器后台任务
 void opticalTask(void *pvParameters) {
   while (1) {
-    processOptical();
+    processOptical(); // 光流传感器进行工作
     vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
@@ -123,10 +124,10 @@ void setup() {
 void loop() {
   // 超声波传感器测距(单位:cm)
   getDistance();
-  // 光流传感器进行工作
-  processOptical();
   // 光电码盘进行工作
   processPhotoelectric();
+  // 进行卡尔曼滤波
+  processKalmanFilter();
 
   if (millis() - lastRemoteTime < 500) { // 当且仅当遥控器在线, 很快接收到数据包时, 才提取数据包中的状态
     updateCarStatusFromRemote(); // 更新小车状态
