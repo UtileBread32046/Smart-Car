@@ -91,6 +91,7 @@ void setup() {
   init_OLED(); // OLED屏幕初始化
   init_MCP(); // MCP初始化
   init_optical(); // 光流传感器初始化
+  init_photoelectric(); // 光电码盘初始化
   Serial.println("小车, 启动!");
 
   // 使用双核进行多任务处理
@@ -122,6 +123,8 @@ void loop() {
   getDistance();
   // 光流传感器进行工作
   processOptical();
+  // 光电码盘进行工作
+  processPhotoelectric();
 
   if (millis() - lastRemoteTime < 500) { // 当且仅当遥控器在线, 很快接收到数据包时, 才提取数据包中的状态
     updateCarStatusFromRemote(); // 更新小车状态
