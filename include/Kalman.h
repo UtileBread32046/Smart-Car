@@ -1,6 +1,5 @@
 #ifndef KALMAN_H
 #define KALMAN_H
-#include "main_car.h"
 
 struct KalmanFilter {
   double estimation; // 估计值
@@ -13,5 +12,8 @@ struct KalmanFilter {
   // 更新函数, 输入传感器测量值, 输出最优估计值
   double updateKalman(double measurement);
 };
+
+// 卡尔曼滤波处理函数
+void processKalmanFilter();
 
 #endif

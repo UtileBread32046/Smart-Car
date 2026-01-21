@@ -20,6 +20,7 @@ static unsigned long lastPCCommand = 0; // 上一次读取电脑终端指令时�
 static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
 static unsigned long lastRemoteTime = 0; // 上一次收到遥控器数据包的时间
 static unsigned long lastRemote02Time = 0; // 上一次收到上位机数据包的时间
+static unsigned long lastSendMessageTest = 0; // 上一次发送测试数据包的时间
 /*-------------------*/
 
 
@@ -88,6 +89,7 @@ void setup() {
   init_ultrasonic(); // 超声波初始化
   init_WiFi_ESP_NOW(); // WiFi 和 ESP-NOW初始化
   esp_now_register_recv_cb(ondataRecv_Unified); // 注册统一接收回调函数
+  registerSmartCar(); // 注册测试数据发送函数
   init_OLED(); // OLED屏幕初始化
   init_MCP(); // MCP初始化
   init_optical(); // 光流传感器初始化
@@ -160,6 +162,12 @@ void loop() {
 
   // 打印小车状态
   // printCarStatue();
+
+  // 发送小车状态
+  if (millis() - lastSendMessageTest > 500) {
+    testMessageSend(sender_test);
+    lastSendMessageTest = millis();
+  }
 
   // // 测试MCP
   // if (MCP_Serial.available()) {

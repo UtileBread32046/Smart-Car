@@ -4,6 +4,8 @@
 
 // 设置转换系数: 轮径67mm, 一周120脉冲 => (67 * 3.14159) / 120 = 1.754056
 const double conversion = 1.754056;
+bool phelecValid = false;
+double dx_phelec = 0; // 平均位移
 
 // 静态变量, 用于记录状态和时间
 static unsigned long lastCalcTime = 0;
@@ -50,15 +52,20 @@ void processPhotoelectric() {
 
   // 每100ms计算一次间隔时间速度
   if (millis() - lastCalcTime >= 100) {
-    // 计算此时刻内的轮子真实位移
-    double xLeft = 1.0*pulseSumA * conversion;
-    double xRight = 1.0*pulseSumB * conversion;
-
-    // 分别计算左右轮的真实物理速度 (mm/s)
-    // 速度 = (脉冲数 * 单步距离) / 时间
-    double vLeft = 1.0*pulseSumA * conversion * 1000 / intervalTime;
-    double vRight = 1.0*pulseSumB * conversion * 1000 / intervalTime;
-
+    // 左右轮误差保持在一个范围内, 保证是直线行驶时才进行计算
+    if (abs(pulseSumA-pulseSumB) < 20) {
+      // 计算此时刻内的轮子真实位移
+      double xLeft = 1.0*pulseSumA * conversion;
+      double xRight = 1.0*pulseSumB * conversion;
+      dx_phelec = (xLeft+xRight) / 2.0; // 计算出直线行驶时的平均位移; 左右移操作仅适用于整型数据
+      phelecValid = true; // 光电码盘数据有效
+      // // 分别计算左右轮的真实物理速度 (mm/s)
+      // // 速度 = (脉冲数 * 单步距离) / 时间
+      // double vLeft = 1.0*pulseSumA * conversion * 1000 / intervalTime;
+      // double vRight = 1.0*pulseSumB * conversion * 1000 / intervalTime;
+    } else {
+      phelecValid = false; // 光电码盘数据无效
+    }
     // Serial.printf("当前计数:(%d,%d)\n", pulseSumA, pulseSumB);
 
     // 重置计数器, 开启下一个周期

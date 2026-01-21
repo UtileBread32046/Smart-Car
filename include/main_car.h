@@ -13,6 +13,7 @@ struct CarStatus {
   double posY; // 记录小车Y轴方向位置(mm)
   double speedX; // 记录小车X轴方向速度(mm/s)
   double speedY; // 记录小车Y轴方向速度(mm/s)
+  double finalSpeed; // 记录小车经过卡尔曼滤波后得到的最终瞬时速度
 };
 
 extern CarStatus car_status; // 将在.cpp文件中分配的变量导入头文件中, 供其他所有文件使用
