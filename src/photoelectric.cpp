@@ -50,16 +50,20 @@ void processPhotoelectric() {
 
   // 每100ms计算一次间隔时间速度
   if (millis() - lastCalcTime >= 100) {
+    // 计算此时刻内的轮子真实位移
+    double xLeft = 1.0*pulseSumA * conversion;
+    double xRight = 1.0*pulseSumB * conversion;
+
     // 分别计算左右轮的真实物理速度 (mm/s)
     // 速度 = (脉冲数 * 单步距离) / 时间
     double vLeft = 1.0*pulseSumA * conversion * 1000 / intervalTime;
     double vRight = 1.0*pulseSumB * conversion * 1000 / intervalTime;
 
+    // Serial.printf("当前计数:(%d,%d)\n", pulseSumA, pulseSumB);
+
     // 重置计数器, 开启下一个周期
     pulseSumA = 0;
     pulseSumB = 0;
-
-    // Serial.printf("当前计数:(%d,%d)\n", pulseSumL, pulseSumR);
 
     lastCalcTime = millis(); // 更新上次计算时间
   }
