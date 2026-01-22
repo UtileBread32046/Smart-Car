@@ -1,160 +1,49 @@
-// 光流传感器数据结构体
-struct FlowData {
-  int16_t flow_x;
-  int16_t flow_y;
-  uint32_t integration_time;
-  uint16_t distance;
-  uint8_t valid;
-  uint8_t confidence;
-};
+#include "ESP-NOW.h"
 
-// 传输数据结构体
-struct VelocityData {
-  float x_vel;  // cm/s
-  float y_vel;  // cm/s  
-  float z_vel;  // m/s
-  uint32_t timestamp;
-  uint8_t checksum;
-};
+static unsigned long lastPrintTime = 0;
+static unsigned long lastReceiveTime = 0;
 
-FlowData current_flow;
-VelocityData velocity_data;
+// 小车状态打印函数
+void printCarStatue() {
+  if (millis() - lastPrintTime > 1000) {
+    Serial.printf("=====当前小车状态=====\n");
+    Serial.printf("运行状态: %s", receiver_test.car_status.isRunning ? "运行中...\n" : "休眠中...\n");
+    Serial.printf("最大速度: %d\n", receiver_test.car_status.maxSpeed);
+    Serial.printf("左轮速度: %d\n", receiver_test.car_status.finalLeft);
+    Serial.printf("右轮速度: %d\n", receiver_test.car_status.finalRight);
+    Serial.printf("距离前方: %.2fmm\n", receiver_test.car_status.distance);
+    Serial.printf("X轴坐标: %.2fmm\n", receiver_test.car_status.posX);
+    Serial.printf("Y轴坐标: %.2fmm\n", receiver_test.car_status.posY);
+    Serial.printf("X轴速度: %.2fmm/s\n", receiver_test.car_status.speedX);
+    Serial.printf("Y轴速度: %.2fmm/s\n", receiver_test.car_status.speedY);
+    Serial.printf("最终测速: %.2fmm/s\n", receiver_test.car_status.finalSpeed);
+    Serial.printf("======================\n\n");
+    lastPrintTime = millis();
+  }
+}
 
-// 状态机变量
-enum ParseState { WAIT_HEADER, WAIT_LENGTH, PARSE_DATA };
-ParseState state = WAIT_HEADER;
-uint8_t buffer[14];
-uint8_t data_index = 0;
+// 接收回调函数, 接收数据包信息并检测接收状态
+// ESP-NOW不可同时注册多个回调函数, 故使用统一的回调函数, 此处通过数据包长度进行区分
+void testDataRecv(const uint8_t *mac, const uint8_t *incoming, int len) {
+  if (len == sizeof(message_test)) {
+    memcpy(&receiver_test, incoming, sizeof(receiver_test)); // 将接收到的数据包拷贝到本地
+    lastReceiveTime = millis(); // 更新收到数据包的时间
+  }
+}
 
-// 配置参数
-const float HEIGHT_FACTOR = 1.0f;
-const float TIME_INTERVAL = 0.04f;
-const float CONVERSION_FACTOR = (HEIGHT_FACTOR / TIME_INTERVAL) * 100.0f;
-
-// 通信配置
-const uint32_t BAUD_RATE = 115200;
-const int TRANSMIT_INTERVAL = 20; // 传输间隔(ms)
+void init_esp_now() { // 初始化函数
+  init_WiFi_ESP_NOW(); // 初始化WiFi和ESP-NOW
+  esp_now_register_recv_cb(testDataRecv); // 注册接收回调函数
+}
 
 void setup() {
-  Serial.begin(BAUD_RATE);        // 调试输出
-  Serial1.begin(BAUD_RATE, SERIAL_8N1, 16, 17); // 光流传感器
-  Serial2.begin(BAUD_RATE, SERIAL_8N1, 18, 19); // 上位机通信
-  
-  Serial.println("ESP32 光流传感器节点启动...");
+  Serial.begin(115200); // 串口和PC端进行通信
+  init_esp_now(); // 进行初始化
 }
 
 void loop() {
-  static unsigned long last_transmit = 0;
-  
-  // 解析传感器数据
-  if (parseFlowData()) {
-    calculateVelocity();
+  if (millis() - lastPrintTime > 1000) {
+    printCarStatue();
+    lastPrintTime = millis();
   }
-  
-  // 定时向上位机传输数据
-  if (millis() - last_transmit >= TRANSMIT_INTERVAL) {
-    transmitVelocityData();
-    last_transmit = millis();
-  }
-}
-
-bool parseFlowData() {
-  while (Serial1.available()) {
-    uint8_t ch = Serial1.read();
-    
-    switch (state) {
-      case WAIT_HEADER:
-        if (ch == 0xFE) {
-          buffer[0] = ch;
-          data_index = 1;
-          state = WAIT_LENGTH;
-        }
-        break;
-        
-      case WAIT_LENGTH:
-        if (ch == 0x0A) {
-          buffer[1] = ch;
-          data_index = 2;
-          state = PARSE_DATA;
-        } else {
-          state = WAIT_HEADER;
-        }
-        break;
-        
-      case PARSE_DATA:
-        buffer[data_index++] = ch;
-        
-        if (data_index >= 14) {
-          if (buffer[13] == 0x55 && verifyChecksum()) {
-            parseFlowFrame();
-            state = WAIT_HEADER;
-            return true; // 成功解析一帧数据
-          }
-          state = WAIT_HEADER;
-        }
-        break;
-    }
-  }
-  return false;
-}
-
-bool verifyChecksum() {
-  uint8_t checksum = 0;
-  for (int i = 2; i < 12; i++) {
-    checksum ^= buffer[i];
-  }
-  return checksum == buffer[12];
-}
-
-void parseFlowFrame() {
-  current_flow.flow_x = (int16_t)((buffer[3] << 8) | buffer[2]);
-  current_flow.flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
-  current_flow.integration_time = (buffer[7] << 8) | buffer[6];
-  current_flow.distance = (buffer[9] << 8) | buffer[8];
-  current_flow.valid = buffer[10];
-  current_flow.confidence = buffer[11];
-}
-
-void calculateVelocity() {
-  if (current_flow.valid == 0xF5) {
-    float flow_x_actual = -current_flow.flow_x / 10000.0f;
-    float flow_y_actual = -current_flow.flow_y / 10000.0f;
-    
-    velocity_data.x_vel  = flow_x_actual * CONVERSION_FACTOR;
-    velocity_data.y_vel = flow_y_actual * CONVERSION_FACTOR;
-    
-    // 速度限幅
-    velocity_data.x_vel = constrain(velocity_data.x_vel, -62.0f, 62.0f);
-    velocity_data.y_vel = constrain(velocity_data.y_vel, -62.0f, 62.0f);
-    
-    // Z轴速度计算
-    static float prev_z_pos = 0;
-    float current_z_pos = current_flow.distance / 1000.0f;
-    velocity_data.z_vel = (current_z_pos - prev_z_pos) / (TIME_INTERVAL);
-    prev_z_pos = current_z_pos;
-    
-    velocity_data.timestamp = millis();
-  }
-}
-
-void transmitVelocityData() {
-  // 计算校验和
-  velocity_data.checksum = calculateVelocityChecksum();
-  
-  // 通过Serial2发送给上位机
-  Serial2.write((uint8_t*)&velocity_data, sizeof(VelocityData));
-  
-  // 调试输出
-  Serial.printf("发送速度数据: X:%.2f Y:%.2f Z:%.3f\n", 
-                velocity_data.x_vel, velocity_data.y_vel, velocity_data.z_vel);
-}
-
-uint8_t calculateVelocityChecksum() {
-  uint8_t checksum = 0;
-  uint8_t* data = (uint8_t*)&velocity_data;
-  
-  for (size_t i = 0; i < sizeof(VelocityData) - 1; i++) {
-    checksum ^= data[i];
-  }
-  return checksum;
 }

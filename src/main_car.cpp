@@ -7,6 +7,8 @@
 #include "move.h"
 #include "gyroscope.h"
 #include "optical.h"
+#include "photoelectric.h"
+#include "Kalman.h"
 #include "tracker.h"
 
 
@@ -20,6 +22,7 @@ static unsigned long lastPCCommand = 0; // 上一次读取电脑终端指令时�
 static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
 static unsigned long lastRemoteTime = 0; // 上一次收到遥控器数据包的时间
 static unsigned long lastRemote02Time = 0; // 上一次收到上位机数据包的时间
+static unsigned long lastSendMessageTest = 0; // 上一次发送测试数据包的时间
 /*-------------------*/
 
 
@@ -52,7 +55,8 @@ void ondataRecv_Unified(const uint8_t *mac, const uint8_t *incoming, int len) {
     // Serial.printf("数据包接收成功! 速度: %d\n", car_status.maxSpeed);
     lastRemoteTime = millis(); // 更新收到数据包的时间
   }
-  else if (len == sizeof(String)) {
+  // else if (len == sizeof(String)) {
+  else {
     command = String((char*)incoming);
     Serial.printf("%s\n", command.c_str());
     Serial.printf("上位机数据包接收成功!\n");
@@ -72,7 +76,7 @@ void OLEDTask(void * pvParameters) {
 // 光流传感器后台任务
 void opticalTask(void *pvParameters) {
   while (1) {
-    processOptical();
+    processOptical(); // 光流传感器进行工作
     vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
@@ -87,9 +91,11 @@ void setup() {
   init_ultrasonic(); // 超声波初始化
   init_WiFi_ESP_NOW(); // WiFi 和 ESP-NOW初始化
   esp_now_register_recv_cb(ondataRecv_Unified); // 注册统一接收回调函数
+  registerSmartCar(); // 注册测试数据发送函数
   init_OLED(); // OLED屏幕初始化
   init_MCP(); // MCP初始化
   init_optical(); // 光流传感器初始化
+  init_photoelectric(); // 光电码盘初始化
   Serial.println("小车, 启动!");
 
   // 使用双核进行多任务处理
@@ -119,12 +125,16 @@ void setup() {
 void loop() {
   // 超声波传感器测距(单位:cm)
   getDistance();
-  // 光流传感器进行工作
-  processOptical();
+  // 光电码盘进行工作
+  processPhotoelectric();
+  // 进行卡尔曼滤波
+  processKalmanFilter();
 
   if (millis() - lastRemoteTime < 500) { // 当且仅当遥控器在线, 很快接收到数据包时, 才提取数据包中的状态
     updateCarStatusFromRemote(); // 更新小车状态
-  } else if (millis() - lastRemote02Time < 500) { // 当上位机在线时
+    // 差速控制小车运动
+    differentialSpeedControl();
+  } else if (millis() - lastRemote02Time < 5000) { // 当上位机在线时
     // 接收上位机通过WiFi-NOW发来的指令
     processCommand(command);
     command.clear();
@@ -138,8 +148,7 @@ void loop() {
       }
     }
   }
-  // 差速控制小车运动
-  differentialSpeedControl();
+
   // 闭环控制小车, 保持走直线
   if (car_status.angleLock) {
     if (millis() - lastLockTime > 10) {
@@ -154,7 +163,13 @@ void loop() {
   }
 
   // 打印小车状态
-  printCarStatue();
+  // printCarStatue();
+
+  // 发送小车状态
+  if (millis() - lastSendMessageTest > 500) {
+    testMessageSend(sender_test);
+    lastSendMessageTest = millis();
+  }
 
   // // 测试MCP
   // if (MCP_Serial.available()) {

@@ -6,6 +6,9 @@ FlowData current_flow; // 存储当前光流数据包
 // PositionVelocity pv_data; // 存储当前位置与速度数据
 HardwareSerial Optical_Serial(2); // 使用串口2接收来自光流传感器的数据
 
+double dx_optical = 0; // 一段时间内光流传感器测出的位移
+double refreshTime = 0.0; // 光流传感器发送数据包的时间(ms), 用于在卡尔曼滤波时与光电码盘刷新频率保持同步
+
 // 有限状态机变量, 封装在cpp文件中, 避免污染全局命名空间
 enum ParseState {
   WAIT_HEADER, // 0: 等待头部, 接收数据包的起始标识(帧头)
@@ -120,7 +123,6 @@ void restoreData() {
   // int16_t raw_flow_y = (int16_t)((buffer[5] << 8) | buffer[4]);
   // uint16_t raw_distance = (uint16_t)((buffer[9] << 8) | buffer[8]);
 
-
   // last_stable_flow_x = (3*last_stable_flow_x + raw_flow_x) >> 2;
   // last_stable_flow_y = (3*last_stable_flow_y + raw_flow_y) >> 2;
   // last_stable_distance = (3*last_stable_distance + raw_distance) >> 2;
@@ -139,6 +141,10 @@ void calculatePV() {
     // 累加位置变化算出小车的实际位置
     car_status.posX += flow_x_actual;
     car_status.posY += flow_y_actual;
+
+    dx_optical = flow_y_actual; // 记录竖直方向上的一段位移
+    refreshTime = current_flow.integration_time/1000.0; // 记录光流传感器的刷新速度(us->ms)
+
     // 实际位移/间隔时间 = 实际速度
     car_status.speedX = flow_x_actual / (current_flow.integration_time/1000000.0); // 注意将微妙us转为秒s
     car_status.speedY = flow_y_actual / (current_flow.integration_time/1000000.0); // 注意将微妙us转为秒s
