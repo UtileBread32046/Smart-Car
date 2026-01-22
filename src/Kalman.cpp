@@ -8,7 +8,7 @@ extern double dx_phelec; // 光电码盘测出的位移
 extern double dx_optical; // 光流传感器测出的位移
 extern double refreshTime; // 刷新时间(由光流传感器主导)
 
-KalmanFilter kf(0.01, 2.0); // 实例化卡尔曼滤波, 使用光电码盘进行校准, 置信度较高, R值较小
+KalmanFilter kf(0.1, 2.0); // 实例化卡尔曼滤波, 使用光电码盘进行校准, 置信度较高, R值较小
 
 // 更新函数, 输入传感器测量值, 输出最优估计值
 double KalmanFilter::updateKalman(double measurement) {
