@@ -7,6 +7,7 @@
 #include "move.h"
 #include "gyroscope.h"
 #include "optical.h"
+#include "tracker.h"
 
 
 /*----全局变量区----*/
