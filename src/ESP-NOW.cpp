@@ -99,6 +99,6 @@ void updateCarStatusFromRemote() {
   int leftBase = receiver_data.throttle + receiver_data.steering;
   int rightBase = receiver_data.throttle - receiver_data.steering;
   // 限幅, 防止计算结果超过设定的最大速度
-  car_status.finalLeft = constrain(leftBase, -car_status.maxSpeed, car_status.maxSpeed);
-  car_status.finalRight = constrain(rightBase, -car_status.maxSpeed, car_status.maxSpeed);
+  car_status.baseLeft = constrain(leftBase, -car_status.maxSpeed, car_status.maxSpeed);
+  car_status.baseRight = constrain(rightBase, -car_status.maxSpeed, car_status.maxSpeed);
 }

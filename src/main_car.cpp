@@ -23,6 +23,8 @@ static unsigned long lastPCCommand = 0; // 上一次读取电脑终端指令时�
 static unsigned long lastRemoteTime = 0; // 上一次收到遥控器数据包的时间
 static unsigned long lastRemote02Time = 0; // 上一次收到上位机数据包的时间
 static unsigned long lastSendMessageTest = 0; // 上一次发送测试数据包的时间
+
+TaskHandle_t oled_handle = NULL; // 定义OLED屏幕刷新任务的handle
 /*-------------------*/
 
 
@@ -105,7 +107,7 @@ void setup() {
     4096,          // 3. 堆栈大小: 分配给这个任务的 RAM 空间(单位: 字节)
     NULL,          // 4. 参数: 传递给任务的参数，通常为 NULL
     1,             // 5. 优先级: 数字越大优先级越高
-    NULL           // 6. 任务句柄: 用于以后删除或暂停任务，不用就填 NULL
+    &oled_handle           // 6. 任务句柄: 用于以后删除或暂停任务，不用就填 NULL
   );
 
   xTaskCreatePinnedToCore(
@@ -130,9 +132,9 @@ void loop() {
   // 进行卡尔曼滤波
   processKalmanFilter();
 
-  if (millis() - lastRemoteTime < 500) { // 当且仅当遥控器在线, 很快接收到数据包时, 才提取数据包中的状态
+  if (millis() - lastRemoteTime < 500) { // 当且仅当遥控器在线, 且很快接收到数据包时
     updateCarStatusFromRemote(); // 更新小车状态
-    switch (car_status.mode) {
+    switch (car_status.mode) { // 判断小车当前运行模式
       case DIFF:
         // 差速控制小车运动
         differentialSpeedControl();

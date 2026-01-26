@@ -29,7 +29,7 @@ void  screenDisplay(bool isRunning, double distance, int finalLeft, int finalRig
     } else {
       if (finalLeft == 0 && finalRight == 0) {
         screen.drawBitmap(16, 48, icon_stop, 32, 32, WHITE);
-      } 
+      }
       else if (finalLeft > 0) {
         if (finalRight > 0) {
           screen.drawBitmap(16, 48, icon_forward, 32, 32, WHITE);
