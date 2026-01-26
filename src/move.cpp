@@ -1,7 +1,9 @@
 #include "move.h"
 #include "main_car.h"
+#include "gyroscope.h"
 
 unsigned long lastMotorTime = 0; // 上次马达速度更新时间, 实现非阻塞控制
+static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
 
 void init_motor() {
   // 马达初始化
@@ -55,4 +57,22 @@ void differentialSpeedControl() {
     }
     lastMotorTime = millis(); // 更新马达速度变更时间
   }
+}
+
+// 闭环控制模式
+void lockAngleControl() {
+  if (millis() - lastLockTime > 10) {
+    mpu6050.update();
+    double currentAngle = mpu6050.getAngleZ();
+    double error = car_status.lockAngle - currentAngle;
+    if (abs(error) > 2) {
+      turnToTarget(error);
+    }
+    lastLockTime = millis();
+  }
+}
+
+// 寻迹模式
+void trackingMode() {
+  
 }

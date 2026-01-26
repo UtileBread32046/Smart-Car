@@ -13,13 +13,13 @@
 
 
 /*----全局变量区----*/
-CarStatus car_status = {true, false, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 存储小车全局信息
+CarStatus car_status; // 存储小车全局信息
 extern message receiver_data;
 extern message02 receiver02_data;
 String command;
 static unsigned long lastStatusTime = 0; // 上次小车状态打印时间
 static unsigned long lastPCCommand = 0; // 上一次读取电脑终端指令时间
-static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
+
 static unsigned long lastRemoteTime = 0; // 上一次收到遥控器数据包的时间
 static unsigned long lastRemote02Time = 0; // 上一次收到上位机数据包的时间
 static unsigned long lastSendMessageTest = 0; // 上一次发送测试数据包的时间
@@ -132,8 +132,17 @@ void loop() {
 
   if (millis() - lastRemoteTime < 500) { // 当且仅当遥控器在线, 很快接收到数据包时, 才提取数据包中的状态
     updateCarStatusFromRemote(); // 更新小车状态
-    // 差速控制小车运动
-    differentialSpeedControl();
+    switch (car_status.mode) {
+      case DIFF:
+        // 差速控制小车运动
+        differentialSpeedControl();
+        break;
+      case ANGLE:
+        // 闭环控制小车, 保持朝向不变
+        lockAngleControl();
+        break;
+    }
+
   } else if (millis() - lastRemote02Time < 5000) { // 当上位机在线时
     // 接收上位机通过WiFi-NOW发来的指令
     processCommand(command);
@@ -146,19 +155,6 @@ void loop() {
         processCommand(pc_line);
         lastPCCommand = millis();
       }
-    }
-  }
-
-  // 闭环控制小车, 保持走直线
-  if (car_status.angleLock) {
-    if (millis() - lastLockTime > 10) {
-      mpu6050.update();
-      double currentAngle = mpu6050.getAngleZ();
-      double error = car_status.lockAngle - currentAngle;
-      if (abs(error) > 2) {
-        turnToTarget(error);
-      }
-      lastLockTime = millis();
     }
   }
 

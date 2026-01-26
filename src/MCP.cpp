@@ -65,12 +65,12 @@ void processCommand(String line) {
       turnToTarget(targetAngle);
     }
     else if (strcmp(cmd, "lock") == 0) {
-      car_status.angleLock = true;
+      car_status.mode = ANGLE;
       car_status.lockAngle = getCurrentAngle();
       Serial.printf("小车进入闭环控制模式!\n");
     }
     else if (strcmp(cmd, "unlock") == 0) {
-      car_status.angleLock = false;
+      car_status.mode = DIFF;
       Serial.printf("已取消闭环控制模式~\n");
     }
     else if (strcmp(cmd, "run_time") == 0) {

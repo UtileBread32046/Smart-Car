@@ -23,5 +23,7 @@ extern unsigned long lastMotorTime; // 上次马达速度更新时间, 实现非
 void init_motor(); // 马达初始化函数
 void move(int leftSpd, int rightSpd); // 小车移动函数实现
 void differentialSpeedControl(); // 差速控制
+void lockAngleControl(); // 朝向锁定, 闭环控制
+void trackingMode(); // 寻迹模式
 
 #endif
