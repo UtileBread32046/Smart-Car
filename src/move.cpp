@@ -4,7 +4,6 @@
 
 unsigned long lastMotorTime = 0; // 上次马达速度更新时间, 实现非阻塞控制
 static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
-extern TaskHandle_t oled_handle; // 引入OLED屏幕任务句柄handle
 
 void init_motor() {
   // 马达初始化
@@ -65,13 +64,7 @@ void differentialSpeedControl() {
 // 闭环控制模式
 void lockAngleControl() {
   if (millis() - lastLockTime > 10) {
-    if (oled_handle != NULL) {
-      vTaskSuspend(oled_handle); // 在操作I2C之前, 让OLED刷新任务暂停, 避免冲突
-    }
-    mpu6050.update(); // 陀螺仪获取最新数据
-    if (oled_handle != NULL) {
-      vTaskResume(oled_handle); // 陀螺仪处理完成, 恢复OLED刷新任务
-    }
+    mpu6050.update();
     double currentAngle = mpu6050.getAngleZ();
     double error = car_status.lockAngle - currentAngle;
     if (abs(error) > 2) {
