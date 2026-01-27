@@ -8,6 +8,12 @@ void printCarStatue() {
   if (millis() - lastPrintTime > 1000) {
     Serial.printf("=====当前小车状态=====\n");
     Serial.printf("运行状态: %s", receiver_test.car_status.isRunning ? "运行中...\n" : "休眠中...\n");
+    Serial.printf("运行模式: ");
+    switch (receiver_test.car_status.mode) {
+      case DIFF: Serial.printf("%s\n", "差速遥控"); break;
+      case ANGLE: Serial.printf("%s\n", "朝向锁定"); break;
+      case TRACK: Serial.printf("%s\n", "寻迹模式"); break;
+    }
     Serial.printf("最大速度: %d\n", receiver_test.car_status.maxSpeed);
     Serial.printf("左轮速度: %d\n", receiver_test.car_status.finalLeft);
     Serial.printf("右轮速度: %d\n", receiver_test.car_status.finalRight);

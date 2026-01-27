@@ -129,5 +129,15 @@ void processCommand(String line) {
       const bool isRunning = params["isRunning"] | true;
       car_status.isRunning = isRunning;
     }
+    else if (strcmp(cmd, "setMoveMode") == 0) {
+      const char* mode = params["mode"] | "DIFF";
+      if (strcmp(mode, "DIFF") == 0) {
+        car_status.mode = DIFF;
+      } else if (strcmp(mode, "ANGLE") == 0) {
+        car_status.mode = ANGLE;
+      } else if (strcmp(mode, "TRACK") == 0) {
+        car_status.mode = TRACK;
+      } 
+    }
   }
 }

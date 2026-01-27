@@ -42,3 +42,12 @@
 {"cmd":"setRunning", "params":{"isRunning":true}}
 {"cmd":"setRunning", "params":{"isRunning":false}}
 ````
+
+7. 切换模式指令
+  a. 指令名称: setMoveMode
+  b. 可调参数: 运动模式
+````json
+{"cmd":"setMoveMode","params":{"mode":"DIFF"}}
+{"cmd":"setMoveMode","params":{"mode":"ANGLE"}}
+{"cmd":"setMoveMode","params":{"mode":"TRACK"}}
+````
