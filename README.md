@@ -70,18 +70,58 @@
 
 ```mermaid
 graph TD
-    A[ESP32 Main Loop] --> B{指令来源}
-    B -->|ESP-NOW| C[遥控器模式]
-    B -->|UART/BT/MCP| D[JSON 指令引擎]
-    D --> E[全局状态柜 sysStatus]
-    C --> E
-    E --> F[MPU6050 闭环算法]
-    F --> G[双路马达驱动]
-    
-    subgraph 后台异步任务
-    H[OLED 状态刷新任务]
-    E -.-> H
+    %% 硬件输入层
+    subgraph Sensors_Input [外部感知与通信输入]
+        S1(MPU6050 陀螺仪)
+        S2(TCRT5000 3路循迹)
+        S3(超声波/码盘/光流)
+        R1(遥控器/上位机 ESP-NOW)
     end
+
+    %% 系统核心处理层
+    subgraph ESP32_DualCore [ESP32 双核任务分发]
+        subgraph Core_0 [Core 0: 高频IO任务]
+            T1(OLEDTask: 屏幕刷新)
+            T2(opticalTask: 位移采样)
+        end
+        
+        subgraph Core_1 [Core 1: 逻辑主循环]
+            M1(UnifiedCallback: 数据包解析)
+            M2{Mode Switch: 模式判定}
+            M3(KalmanFilter: 速度融合)
+        end
+    end
+
+    %% 运动控制算法层
+    subgraph Control_Logic [运动控制算法层]
+        L1[DIFF: 基础差速与避障]
+        L2[ANGLE: PID 角度闭环锁定]
+        L3[TRACK: PD 路径循迹算法]
+    end
+
+    %% 执行输出层
+    subgraph Output_Hardware [执行输出层]
+        PWM[Motor PWM Controller]
+        ML(左侧马达驱动)
+        MR(右侧马达驱动)
+    end
+
+    %% 连接逻辑
+    S1 & S2 & S3 --> Core_1
+    R1 --> M1
+    M1 --> M2
+    M3 -.-> Control_Logic
+    
+    M2 -->|遥控指令| L1
+    M2 -->|锁定指令| L2
+    M2 -->|寻迹指令| L3
+    
+    L1 & L2 & L3 --> PWM
+    PWM --> ML & MR
+    
+    %% 核心间交互
+    T2 -.-> M3
+    M2 -.-> T1
 
 ```
 
