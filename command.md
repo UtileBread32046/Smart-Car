@@ -11,22 +11,22 @@
 1. 全局指令集
 > 用于调节小车的全局状态
 
-| 指令类别 | 指令字符 | 可选参数 | 功能描述 | Json 指令 |
-| :--- | :--- | :--- | :--- | :--- |
-| **状态控制** | `setRunning` | `isRunning:true/false` | 控制小车运行状态 | `{"cmd":"setRunning", "params":{"isRunning":true}}` |
-| **模式切换** | `setMoveMode` | `mode:DIFF/ANGLE/TRACK` |选择不同的控制模式 | `{"cmd":"setMoveMode","params":{"mode":"DIFF"}}` |
+| 指令类别 | 指令字符 | 可选参数 | 功能描述 | Json 指令 | 补充说明 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **状态控制** | `setRunning` | `isRunning:true/false` | 控制小车运行状态 | `{"cmd":"setRunning", "params":{"isRunning":true}}` | 仅有true/false两种选项 |
+| **模式切换** | `setMoveMode` | `mode:DIFF/ANGLE/TRACK` |选择不同的控制模式 | `{"cmd":"setMoveMode","params":{"mode":"DIFF"}}` | DIFF: 差速控制; ANGLE: 朝向锁定; TRACK: 寻迹模式 |
 
 
 2. 测试指令集
 > 用于单独测试小车的某项功能
 
-| 指令类别 | 指令字符 | 可选参数 | 功能描述 | Json 指令 |
-| :--- | :--- | :--- | :--- | :--- |
-| **定量转体** | `turn` | `turnAngle:90` | 使小车原地旋转指定角度(以顺时针为正) | `{"cmd":"turn","params":{"turnAngle":90}}` |
-| **定时移动** | `run_time` | `direction:forward/backward ; time:1000 ; speed:50` | 在指定时间(单位:ms)内以指定速度向指定方向移动 | `{"cmd":"run_time","params":{"direction":"forward","time":500,"speed":80}}` |
-| **定长移动** | `run_distance` | `distance:50 ; speed:50/-50` | 以指定速度移动指定距离(单位:mm) | `{"cmd":"run_distance","params":{"distance":-50,"speed":60}}` |
-| **闭环控制** | `lock/unlock` | - | 启动/禁用角度锁定模式 | `{"cmd":"lock"}` |
-| **最大速度** | `setMaxSpeed` | `speed:50` | 设置小车的最大速度 | `{"cmd":"setMaxSpeed", "params":{"speed":50}}` |
+| 指令类别 | 指令字符 | 可选参数 | 功能描述 | Json 指令 | 补充说明 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **定量转体** | `turn` | `turnAngle:90` | 使小车原地旋转指定角度(以顺时针为正) | `{"cmd":"turn","params":{"turnAngle":90}}` | 角度参数可正可负, 可以超过360° |
+| **定时移动** | `run_time` | `direction:forward/backward ; time:1000 ; speed:50` | 在指定时间(单位:ms)内以指定速度向指定方向移动 | `{"cmd":"run_time","params":{"direction":"forward","time":500,"speed":80}}` | 朝向默认向前; 时间应为正值, 默认1000ms; 速度应填正值, 范围:[40, 255] |
+| **定长移动** | `run_distance` | `distance:50 ; speed:50/-50` | 以指定速度移动指定距离(单位:mm) | `{"cmd":"run_distance","params":{"distance":-50,"speed":60}}` | 距离可正可负, 向前为正, 默认不动; 速度应为正值, 范围:[40,255] |
+| **闭环控制** | `lock/unlock` | - | 启动/禁用角度锁定模式 | `{"cmd":"lock"}` | lock: 角度锁定; unlock: 解除锁定, 进入DIFF差速控制模式 |
+| **最大速度** | `setMaxSpeed` | `speed:50` | 设置小车的最大速度 | `{"cmd":"setMaxSpeed", "params":{"speed":50}}` | 速度应为正值, 默认为0, 范围:[0,255] |
 ---
 
 ### [原版]调用小车MCP json指令集

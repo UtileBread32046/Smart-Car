@@ -74,10 +74,11 @@ void processCommand(String line) {
       Serial.printf("已取消闭环控制模式~\n");
     }
     else if (strcmp(cmd, "run_time") == 0) {
-      const char* direction = params["direction"] | "null"; // 方向
-      const int time = params["time"] | 10; // 时间(单位:ms)
-      int speed = params["speed"] | 50; // 速度
-      speed = constrain(speed, 50, 255); // 设置速度上下限
+      const char* direction = params["direction"] | "forward"; // 方向
+      int time = params["time"] | 1000; // 时间(单位:ms)
+      int speed = params["speed"] | 40; // 速度
+      speed = constrain(speed, 40, 255); // 设置速度上下限
+      time = constrain(time, 0, INFINITY);
       if (strcmp(direction, "forward") == 0) {
         car_status.finalLeft = speed;
         car_status.finalRight = speed;
@@ -122,7 +123,7 @@ void processCommand(String line) {
     }
     else if (strcmp(cmd, "setMaxSpeed") == 0) {
       int speed = params["speed"] | 0;
-      speed = constrain(speed, 40, 255);
+      speed = constrain(speed, 0, 255);
       car_status.maxSpeed = speed;
     }
     else if (strcmp(cmd, "setRunning") == 0) {
