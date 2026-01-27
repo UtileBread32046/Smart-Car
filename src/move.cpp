@@ -2,8 +2,9 @@
 #include "main_car.h"
 #include "gyroscope.h"
 
-unsigned long lastMotorTime = 0; // 上次马达速度更新时间, 实现非阻塞控制
+static unsigned long lastMotorTime = 0; // 上次马达速度更新时间, 实现非阻塞控制
 static unsigned long lastLockTime = 0; // 上一次闭环控制更新的时间
+static unsigned long lastTrackTime = 0; // 上一次寻迹移动更新的时间
 
 void init_motor() {
   // 马达初始化
@@ -75,6 +76,25 @@ void lockAngleControl() {
 }
 
 // 寻迹模式
-void trackingMode() {
-  
+void trackLineMode() {
+  if (millis() - lastTrackTime > 10) {
+    if (car_status.trackL == 0 && car_status.trackC == 1 && car_status.trackR == 0) {
+      car_status.finalLeft = car_status.maxSpeed;
+      car_status.finalRight = car_status.maxSpeed;
+    }
+    else if (car_status.trackL == 0 && car_status.trackC == 0 && car_status.trackR == 1) {
+      car_status.finalLeft = car_status.maxSpeed;
+      car_status.finalRight = 0;
+    }
+    else if (car_status.trackL == 1 && car_status.trackC == 0 && car_status.trackR == 0) {
+      car_status.finalLeft = 0;
+      car_status.finalRight = car_status.maxSpeed;
+    }
+    else {
+      car_status.finalLeft = car_status.maxSpeed;
+      car_status.finalRight = car_status.maxSpeed;
+    }
+    move(car_status.finalLeft, car_status.finalRight);
+    lastTrackTime = millis();
+  }
 }

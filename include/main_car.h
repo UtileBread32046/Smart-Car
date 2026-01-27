@@ -8,10 +8,10 @@ enum MoveMode { // 记录小车移动模式;
 };
 
 struct CarStatus {
-  MoveMode mode = DIFF; // 记录小车默认运行状态
+  MoveMode mode = TRACK; // 记录小车默认运行状态
   bool isRunning = true; // 记录小车运行状态(默认开启)
   double lockAngle; // 记录小车闭环控制时的角度
-  int maxSpeed; // 记录小车最大速度
+  int maxSpeed = 50; // 记录小车最大速度
   int baseLeft; // 记录遥控器左轮基准速度
   int baseRight; // 记录遥控器右轮基准速度
   int finalLeft; // 小车最终左轮速度

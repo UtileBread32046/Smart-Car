@@ -98,6 +98,7 @@ void setup() {
   init_MCP(); // MCP初始化
   init_optical(); // 光流传感器初始化
   init_photoelectric(); // 光电码盘初始化
+  init_tracker(); // 红外寻迹传感器初始化
   Serial.println("小车, 启动!");
 
   // 使用双核进行多任务处理
@@ -142,6 +143,11 @@ void loop() {
       case ANGLE:
         // 闭环控制小车, 保持朝向不变
         lockAngleControl();
+        break;
+      case TRACK:
+        // 寻迹模式, 沿着黑色胶带前进
+        update_tracker(); // 更新传感器
+        trackLineMode();
         break;
     }
 
